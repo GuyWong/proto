@@ -7,10 +7,12 @@ import java.util.concurrent.Executors;
 
 public class Server implements Runnable {
 	private int port;
+	private String outRep;
 	private ExecutorService threadPool;
 	
-	public Server(int port) {
+	public Server(int port, String outRep) {
 		this.port = port;
+		this.outRep = outRep;
 		threadPool = Executors.newFixedThreadPool(5/*TODO parameter this*/);
 	}
 	
@@ -21,7 +23,7 @@ public class Server implements Runnable {
 			ServerSocket server = new ServerSocket(port);
 			
 			while (true) {
-				threadPool.execute(new ClientConnection(server.accept()));
+				threadPool.execute(new ClientConnection(server.accept(), outRep));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

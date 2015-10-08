@@ -1,30 +1,21 @@
 package p2pRes.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
+import p2pRes.protocol.Protocol;
 
 public class ClientConnection implements Runnable {
 	private Socket client;
+	private String outRep;
 	
-	public ClientConnection(Socket client) {
+	public ClientConnection(Socket client, String outRep) {
+		this.outRep = outRep;
 		this.client = client;
 	}
 	
 	@Override
 	public void run() {
-		try {
-			System.out.println("Running client... " + this.toString());             
-	        BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-			
-	        String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-            	System.out.println("received: " + inputLine);
-            }
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
+		System.out.println("Running client... " + this.toString());             
+        
+		Protocol.getFile(client, outRep);
 	}
 }
