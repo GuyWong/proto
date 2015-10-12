@@ -16,7 +16,8 @@ public class SayHi {
 		
 		try {
 			try {
-				Protocol.sendFile(new Socket("127.0.0.1", 6667), "C://Utils//Workspace//Test//test1.txt");
+				//Protocol.sendFile(new Socket("127.0.0.1", 6667), "C://Utils//Workspace//Test//test1.txt");
+				Protocol.sendFile(new Socket("127.0.0.1", 6667), "C://Utils//Workspace//Test//test1.jpg");
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
