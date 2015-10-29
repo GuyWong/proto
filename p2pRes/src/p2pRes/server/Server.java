@@ -7,12 +7,12 @@ import java.util.concurrent.Executors;
 
 public class Server implements Runnable {
 	private int port;
-	private String outRep;
+	private String sharedRep;
 	private ExecutorService threadPool;
 	
-	public Server(int port, String outRep) {
+	public Server(int port, String sharedRep) {
 		this.port = port;
-		this.outRep = outRep;
+		this.sharedRep = sharedRep;
 		threadPool = Executors.newFixedThreadPool(5/*TODO parameter this*/);
 	}
 	
@@ -22,11 +22,11 @@ public class Server implements Runnable {
 			@SuppressWarnings("resource")
 			ServerSocket server = new ServerSocket(port);
 			
-			while (true) {
-				threadPool.execute(new ClientConnection(server.accept(), outRep));
-			}
+			threadPool.execute(new ClientConnection(server.accept(), sharedRep));
 		} catch (IOException e) {
-			e.printStackTrace();
+			e.printStackTrace();//TODO
 		} 
+
+		System.out.println("Server - This is the end...");
 	}
 }

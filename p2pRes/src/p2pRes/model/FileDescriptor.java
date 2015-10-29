@@ -1,7 +1,11 @@
 package p2pRes.model;
 
-public class FileDescriptor {
-	private final static int BLOC_SIZE = 1024;
+import java.io.Serializable;
+
+public class FileDescriptor implements Serializable {
+	private static final long serialVersionUID = 6464457465596608623L;
+	
+	private static final int BLOC_SIZE = 1024;
 	private final long blockNumbers;
 	private final long fileSize;
 	

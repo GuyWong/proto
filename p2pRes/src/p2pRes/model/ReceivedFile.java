@@ -13,11 +13,11 @@ public class ReceivedFile {
 	private FileDescriptor descriptor;
 	
 	
-	public ReceivedFile(String path, long targetSize/*TODO replace by filedescriptor*/) throws IOException {	
+	public ReceivedFile(String path, FileDescriptor descriptor) throws IOException {	
 		this.fileChannel = Files.newByteChannel(Paths.get(path), StandardOpenOption.CREATE, 
 																	StandardOpenOption.TRUNCATE_EXISTING, 
 																	StandardOpenOption.WRITE);
-		this.descriptor = new FileDescriptor(targetSize);
+		this.descriptor = descriptor;
 	}
 	
 	public boolean isComplete() {

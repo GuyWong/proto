@@ -1,78 +1,159 @@
 package p2pRes.protocol;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
-import p2pRes.model.ReceivedFile;
-import p2pRes.model.TransferableFile;
 
-public class Protocol {
-	public static void getFile(Socket socket, String outRep) {
-		try {      
-	        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			
-	        String fileName = readInfo(in);        
-	        long targetSize = Long.parseLong(readInfo(in));
-	        
-	        ReceivedFile receivedFile = new ReceivedFile(outRep+"//"+fileName, targetSize);	    
+public abstract class Protocol {
+	protected final static byte ASK_FILE_DESCRIPTOR = 0;
+	protected final static byte ASK_BLOCK = 1;
+	protected final static byte ACK = 2;
+	protected final static byte ASK_END_CONNECTION = 3;
 
-	        for (long blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
-	        	System.out.println(" writing " + fileName + " block " + blockNumber);
-	        	readOneBlock(blockNumber, socket.getInputStream(), receivedFile);
-	        }
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+	private InputStream socketReader;
+	private OutputStream socketSender;
+
+	private ObjectOutputStream socketObjectSender;
+	private ObjectInputStream socketObjectReader;			
 	
-	private static String readInfo(BufferedReader socketReader) throws IOException {
-		String info;
-		while ((info = socketReader.readLine()) != null) {
-        	System.out.println("info: " + info);
-        	if (info.length()>0) { break; }
-        }
-        return info;
-	} 
 	
-	private static void readOneBlock(long blockNumber, InputStream socketReader, ReceivedFile receivedFile) throws IOException { //need a context
-		byte[] buffer = new byte[receivedFile.getDescriptor().getBlockSize(blockNumber)];
-		socketReader.read(buffer, 0, buffer.length);
-		receivedFile.writeBlock(blockNumber, buffer);
-	}
-	
-	public static void sendFile(Socket socket, String filePath) {
-		
+	public Protocol(Socket socket) {
 		try {
-			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			try {
-				out.println((new File(filePath)).getName());
-				
-				TransferableFile transferableFile = new TransferableFile(filePath);
-				out.println(transferableFile.getDescriptor().getFileSize());
-				
-				OutputStream os = socket.getOutputStream();
-				try {
-					for (int blockNumber=0; blockNumber<transferableFile.getDescriptor().getBlockNumbers(); blockNumber++) {
-						os.flush();
-						byte[] stream = transferableFile.readBlock(blockNumber);
-						os.write(stream, 0, stream.length);
-					}
-				}
-				finally {
-					os.close();
-				}
-			}
-			finally {
-				out.close();
-			}
+			socketReader = socket.getInputStream();
+			socketSender = socket.getOutputStream();
+
+			socketObjectSender = new ObjectOutputStream(socketSender);
+			socketObjectReader = new ObjectInputStream(socketReader);						
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+		
+	protected byte readByte() {
+		try {
+			return (byte) socketReader.read();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return -1;
+		}
+	}
+	
+	protected void sendByte(byte value) {
+		try {
+			socketSender.write(value);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	protected int readInt() {
+		try {
+			return socketReader.read();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return -1;
+		}
+	}
+	
+	protected void sendInt(int value) {
+		try {
+			socketSender.write(value);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	protected long readLong() {
+		try {
+			return (long)socketReader.read();//TODO transfer long!
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return -1;
+		}
+	}
+	
+	protected void sendLong(long value) {
+		try {
+			socketSender.write((int)value);//TODO transfer long!
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	protected byte[] readBytes() {
+		int size = this.readInt();
+		byte[] buffer = new byte[size]; //todo : don't allocate everytime
+		try {
+			socketReader.read(buffer);
+			this.sendAcknowlegment();
+			return buffer;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	protected void sendBytes(byte[] bytes) {
+		try {
+			this.sendInt(bytes.length);
+			socketSender.write(bytes);
+			this.waitForAcknowlegment();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	protected void sendObject(Object obj) {
+		try {
+			socketObjectSender.writeObject(obj);
+			this.waitForAcknowlegment();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+	}
+	
+	protected Object readObject() {
+		try {
+			Object obj = socketObjectReader.readObject();
+			this.sendAcknowlegment();
+			return obj;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}		
+	}
+	
+	private void waitForAcknowlegment() {
+		while (true/*set an escape timeout*/) {
+			byte command = this.readByte();
+			if (ACK==command) {
+				System.out.println("Protocol - ACK received");
+				return;
+			}		
+		}
+	}
+	
+	private void sendAcknowlegment() {
+		this.sendByte(ACK);
+		System.out.println("Protocol - ACK send...");
 	}
 }
