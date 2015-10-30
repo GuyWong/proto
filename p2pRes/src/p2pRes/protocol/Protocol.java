@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 public abstract class Protocol {
 	protected final static byte ASK_FILE_DESCRIPTOR = 0;
@@ -46,25 +47,7 @@ public abstract class Protocol {
 	protected void sendByte(byte value) {
 		try {
 			socketSender.write(value);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	protected int readInt() {
-		try {
-			return socketReader.read();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return -1;
-		}
-	}
-	
-	protected void sendInt(int value) {
-		try {
-			socketSender.write(value);
+			socketSender.flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -73,7 +56,9 @@ public abstract class Protocol {
 	
 	protected long readLong() {
 		try {
-			return (long)socketReader.read();//TODO transfer long!
+			byte[] encodedValue = new byte[Long.SIZE / Byte.SIZE];
+			socketReader.read(encodedValue);
+			return ByteBuffer.wrap(encodedValue).getLong();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -83,7 +68,7 @@ public abstract class Protocol {
 	
 	protected void sendLong(long value) {
 		try {
-			socketSender.write((int)value);//TODO transfer long!
+			socketSender.write(ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(value).array());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -92,10 +77,11 @@ public abstract class Protocol {
 	
 	
 	protected byte[] readBytes() {
-		int size = this.readInt();
+		int size = (int)this.readLong();
 		byte[] buffer = new byte[size]; //todo : don't allocate everytime
 		try {
-			socketReader.read(buffer);
+			System.out.println("Protocol - readBytes size " + size);
+			socketReader.read(buffer, 0, size);
 			this.sendAcknowlegment();
 			return buffer;
 		} catch (IOException e) {
@@ -107,8 +93,10 @@ public abstract class Protocol {
 	
 	protected void sendBytes(byte[] bytes) {
 		try {
-			this.sendInt(bytes.length);
-			socketSender.write(bytes);
+			this.sendLong(bytes.length);
+			socketSender.write(bytes, 0, bytes.length);
+			System.out.println("Protocol - sendBytes size " + bytes.length);
+			socketSender.flush();
 			this.waitForAcknowlegment();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -119,6 +107,7 @@ public abstract class Protocol {
 	protected void sendObject(Object obj) {
 		try {
 			socketObjectSender.writeObject(obj);
+			socketObjectSender.flush();
 			this.waitForAcknowlegment();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -129,6 +118,7 @@ public abstract class Protocol {
 	protected Object readObject() {
 		try {
 			Object obj = socketObjectReader.readObject();
+			socketObjectSender.flush();
 			this.sendAcknowlegment();
 			return obj;
 		} catch (IOException e) {
@@ -146,14 +136,15 @@ public abstract class Protocol {
 		while (true/*set an escape timeout*/) {
 			byte command = this.readByte();
 			if (ACK==command) {
-				System.out.println("Protocol - ACK received");
+				//System.out.println("Protocol - ACK received");
 				return;
-			}		
+			}	
+			System.out.println("Protocol - not ACK... " + command);
 		}
 	}
 	
 	private void sendAcknowlegment() {
 		this.sendByte(ACK);
-		System.out.println("Protocol - ACK send...");
+		//System.out.println("Protocol - ACK send...");
 	}
 }

@@ -21,6 +21,7 @@ public class ClientProtocol extends Protocol {
 	}
 	
 	public byte[] askForBlock(long blockNumber) {
+		System.out.println("ClientProtocol - ASK_BLOCK " + blockNumber);
 		this.sendByte(Protocol.ASK_BLOCK);
 		this.sendLong(blockNumber);
 		return this.readBytes();	
