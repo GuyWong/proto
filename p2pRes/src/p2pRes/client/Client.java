@@ -5,42 +5,74 @@ import java.net.Socket;
 import p2pRes.model.FileDescriptor;
 import p2pRes.model.ReceivedFile;
 import p2pRes.protocol.ClientProtocol;
+import p2pRes.protocol.ProtocolException;
 
 public class Client {
 	private Socket server;
 	
-	public Client (String netAdress, int port) {
+	public Client (String netAdress, int port) throws ClientException {
 		try {
 			this.server = new Socket(netAdress, port);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new ClientException("Client initialisation failed", e);
 		}
 	}
 	
-	public void getFile (String outRep, String fileName) {
-		ClientProtocol clientProtocol = new ClientProtocol(server);
+	public void getFile (String outRep, String fileName) throws ClientException {
+		ClientProtocol clientProtocol = initClientProtocol(server);
+		
 		try {
-			FileDescriptor fileDescriptor = clientProtocol.getFileDescriptor(fileName);
-			
+			FileDescriptor fileDescriptor = getFileDescriptorFromPeer(fileName, clientProtocol);
 			System.out.println("Client - Get FD OK " + fileDescriptor.getBlockNumbers());
-			
-			try {      
-		        ReceivedFile receivedFile = new ReceivedFile(outRep+"//"+fileName, fileDescriptor);	    
-	
-		        for (long blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
-		        	System.out.println(" writing " + fileName + " block " + blockNumber);
-		        	//readOneBlock(blockNumber, socket.getInputStream(), socket.getOutputStream(), receivedFile);
-		        	byte[] block = clientProtocol.askForBlock(blockNumber);
-					receivedFile.writeBlock(blockNumber, block);
-		        }
-			}
-			catch (IOException e) {
+			 
+	        ReceivedFile receivedFile = initReceivingFile(outRep+"//"+fileName, fileDescriptor);  
+	        for (long blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
+	        	System.out.println(" writing " + fileName + " block " + blockNumber);
+	        	//readOneBlock(blockNumber, socket.getInputStream(), socket.getOutputStream(), receivedFile);
+	        	byte[] block = getBlockFromPeer(blockNumber, clientProtocol);
+				receivedFile.writeBlock(blockNumber, block);
+	        }
+		}
+		finally {
+			try {
+				clientProtocol.askEndConnection();
+			} catch (ProtocolException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		finally {
-			clientProtocol.askEndConnection();
+	}
+	
+	private ClientProtocol initClientProtocol(Socket server) throws ClientException {
+		try {
+			return new ClientProtocol(server);
+		} catch (ProtocolException e) {
+			throw new ClientException("Client initialisation failed", e);
+		}
+	}
+	
+	private ReceivedFile initReceivingFile(String path, FileDescriptor fileDescriptor) throws ClientException {
+		try {
+			return new ReceivedFile(path, fileDescriptor);
+		} catch (IOException e) {
+			throw new ClientException("Error initializing ReceivingFile " + path, e);
+		}
+	}
+	
+	private FileDescriptor getFileDescriptorFromPeer(String fileName, ClientProtocol peer) throws ClientException {
+		//TODO: handle notFoundResponse
+		try {
+			return peer.getFileDescriptor(fileName);
+		} catch (ProtocolException e) {
+			throw new ClientException("Error getting file descriptor for " + fileName + " from peer", e);
+		}
+	}
+	
+	private byte[] getBlockFromPeer(long blockNumber, ClientProtocol peer) throws ClientException {
+		try {
+			return peer.askForBlock(blockNumber);
+		} catch (ProtocolException e) {
+			throw new ClientException("Error getting block " + blockNumber + " from peer", e);
 		}
 	}
 }

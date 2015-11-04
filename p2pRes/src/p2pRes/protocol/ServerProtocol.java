@@ -9,11 +9,11 @@ import p2pRes.protocol.response.ProtocolResponse;
 import p2pRes.protocol.response.UnknownCommand;
 
 public class ServerProtocol extends Protocol {	
-	public ServerProtocol(Socket socket) {
+	public ServerProtocol(Socket socket) throws ProtocolException {
 		super(socket);
 	}
 
-	public ProtocolResponse handleInstruction() {
+	public ProtocolResponse handleInstruction() throws ProtocolException {
 		byte clientCommand = this.readByte();
 		System.out.println("ServerProtocol - handleInstruction " + clientCommand);  
 		if (Protocol.ASK_FILE_DESCRIPTOR == clientCommand) {
@@ -37,11 +37,11 @@ public class ServerProtocol extends Protocol {
 		}			
 	}
 	
-	public void sendFileDescriptor(FileDescriptor fileDescriptor) {
+	public void sendFileDescriptor(FileDescriptor fileDescriptor) throws ProtocolException {
 		this.sendObject(fileDescriptor);
 	}
 		
-	public void sendBlock(byte[] bytes) {
+	public void sendBlock(byte[] bytes) throws ProtocolException {
 		this.sendBytes(bytes);
 	}
 }
