@@ -1,6 +1,7 @@
 package p2pRes.protocol;
 
 import java.net.Socket;
+import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
 import p2pRes.protocol.response.AskForBlock;
 import p2pRes.protocol.response.AskForEndConnection;
@@ -42,6 +43,6 @@ public class ServerProtocol extends Protocol {
 	}
 		
 	public void sendBlock(byte[] bytes) throws ProtocolException {
-		this.sendBytes(bytes);
+		this.sendObject(new Block(bytes));
 	}
 }

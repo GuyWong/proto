@@ -1,6 +1,7 @@
 package p2pRes.protocol;
 
 import java.net.Socket;
+import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
 
 public class ClientProtocol extends Protocol {
@@ -20,10 +21,16 @@ public class ClientProtocol extends Protocol {
 		this.sendByte(Protocol.ASK_END_CONNECTION);
 	}
 	
-	public byte[] askForBlock(long blockNumber) throws ProtocolException {
+	public Block askForBlock(long blockNumber) throws ProtocolException {
 		System.out.println("ClientProtocol - ASK_BLOCK " + blockNumber);
 		this.sendByte(Protocol.ASK_BLOCK);
 		this.sendLong(blockNumber);
-		return this.readBytes();	
+		
+		Block block = (Block)this.readObject();		
+		if (!block.checkHash()) {
+			throw new ProtocolException("Error checking hash of block " + blockNumber);
+		}
+		
+		return block;	
 	}
 }

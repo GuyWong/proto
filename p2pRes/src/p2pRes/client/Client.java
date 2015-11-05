@@ -2,6 +2,8 @@ package p2pRes.client;
 
 import java.io.IOException;
 import java.net.Socket;
+
+import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
 import p2pRes.model.ReceivedFile;
 import p2pRes.protocol.ClientProtocol;
@@ -28,9 +30,8 @@ public class Client {
 	        ReceivedFile receivedFile = initReceivingFile(outRep+"//"+fileName, fileDescriptor);  
 	        for (long blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
 	        	System.out.println(" writing " + fileName + " block " + blockNumber);
-	        	//readOneBlock(blockNumber, socket.getInputStream(), socket.getOutputStream(), receivedFile);
-	        	byte[] block = getBlockFromPeer(blockNumber, clientProtocol);
-				receivedFile.writeBlock(blockNumber, block);
+	        	Block block = getBlockFromPeer(blockNumber, clientProtocol);
+				receivedFile.writeBlock(blockNumber, block.getValue());
 	        }
 		}
 		finally {
@@ -68,7 +69,7 @@ public class Client {
 		}
 	}
 	
-	private byte[] getBlockFromPeer(long blockNumber, ClientProtocol peer) throws ClientException {
+	private Block getBlockFromPeer(long blockNumber, ClientProtocol peer) throws ClientException {
 		try {
 			return peer.askForBlock(blockNumber);
 		} catch (ProtocolException e) {
