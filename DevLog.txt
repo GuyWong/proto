@@ -1,0 +1,14 @@
+=>Setup gitbash link to begin in a specific repo
+"C:\Program Files\Git\git-bash.exe" --cd="C:\Dev\workspace"
+
+=>Setup alias in bash
+create C:\Users\AdminDI\.bashrc 
+set "alias la='ls -al'" into
+
+=>Configure local git with github
+git remote add origin https://github.com/GuyWong/proto.git => rajoute la ligne ds config
+git push --set-upstream origin firstpoc => cree la branche sur le repo distant
+
+=> set name for commit
+git config --global user.name "GuyWong"
+git config --global user.email "somewere@dtc.com"
