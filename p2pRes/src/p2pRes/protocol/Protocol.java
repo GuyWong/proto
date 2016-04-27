@@ -8,6 +8,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
+
+//TODO : Fix that ugly behavior, every protocol part need to own his sender. 
+//if you reset a sender it wont crash after because you need a acknowledge send
 public abstract class Protocol {
 	protected final static byte ASK_FILE_DESCRIPTOR = 0;
 	protected final static byte ASK_BLOCK = 1;
@@ -96,9 +99,14 @@ public abstract class Protocol {
 	
 	protected void sendObject(Object obj) throws ProtocolException {
 		try {
-			socketObjectSender.writeObject(obj);
-			socketObjectSender.flush();
-			this.waitForAcknowlegment();
+			try {
+				socketObjectSender.writeObject(obj);
+				socketObjectSender.flush();
+				this.waitForAcknowlegment();
+			}
+			finally {
+				socketObjectSender.reset();
+			}			
 		} catch (IOException e) {
 			throw new ProtocolException(e);
 		}		
@@ -106,8 +114,7 @@ public abstract class Protocol {
 	
 	protected Object readObject() throws ProtocolException {
 		try {
-			Object obj = socketObjectReader.readObject();
-			socketObjectSender.flush();
+			Object obj = socketObjectReader.readObject();		
 			this.sendAcknowlegment();
 			return obj;
 		} catch (IOException e) {

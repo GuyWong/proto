@@ -30,6 +30,7 @@ public class ReceivedFile {
 
 	public void writeBlock(long blockNumber, byte[] block) {
 		try {
+			System.out.println(" ReceivedFile - writing block " + blockNumber + " size " + block.length);
 			this.fileChannel.position(this.descriptor.getPosition(blockNumber));
 			this.fileChannel.write(ByteBuffer.wrap(block));
 			this.blockCounter++;
