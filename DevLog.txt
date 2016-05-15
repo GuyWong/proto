@@ -9,6 +9,9 @@ set "alias la='ls -al'" into
 git remote add origin https://github.com/GuyWong/proto.git => rajoute la ligne ds config
 git push --set-upstream origin firstpoc => cree la branche sur le repo distant
 
+=>Get repo from remote
+git clone https://github.com/GuyWong/proto
+
 => set name for commit
 git config --global user.name "GuyWong"
 git config --global user.email "somewere@dtc.com"
