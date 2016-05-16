@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
 public class Server implements Runnable {
 	private int port;
 	private String sharedRep;
@@ -26,7 +27,5 @@ public class Server implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();//TODO
 		} 
-
-		System.out.println("Server - This is the end...");
 	}
 }

@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class FileDescriptor implements Serializable {
 	private static final long serialVersionUID = 6464457465596608623L;
 	
-	private static final int BLOC_SIZE = 1024;
+	private static final int BLOC_SIZE = 1024*100;//To be parametized //100ko seems the best
 	private final long blockNumbers;
 	private final long fileSize;
 	

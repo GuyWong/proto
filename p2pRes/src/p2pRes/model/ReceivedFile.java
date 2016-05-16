@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+import p2pRes.log.Logger;
+
 public class ReceivedFile { 
 	private long blockCounter = 0;//add a block map...
 	private SeekableByteChannel fileChannel;
@@ -30,7 +32,7 @@ public class ReceivedFile {
 
 	public void writeBlock(long blockNumber, byte[] block) {
 		try {
-			System.out.println(" ReceivedFile - writing block " + blockNumber + " size " + block.length);
+			Logger.debug(" ReceivedFile - writing block " + blockNumber + " size " + block.length);
 			this.fileChannel.position(this.descriptor.getPosition(blockNumber));
 			this.fileChannel.write(ByteBuffer.wrap(block));
 			this.blockCounter++;

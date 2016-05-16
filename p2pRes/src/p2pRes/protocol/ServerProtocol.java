@@ -1,6 +1,8 @@
 package p2pRes.protocol;
 
 import java.net.Socket;
+
+import p2pRes.log.Logger;
 import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
 import p2pRes.protocol.response.AskForBlock;
@@ -16,24 +18,24 @@ public class ServerProtocol extends Protocol {
 
 	public ProtocolResponse handleInstruction() throws ProtocolException {
 		byte clientCommand = this.readByte();
-		System.out.println("ServerProtocol - handleInstruction " + clientCommand);  
+		Logger.debug("ServerProtocol - handleInstruction " + clientCommand);  
 		if (Protocol.ASK_FILE_DESCRIPTOR == clientCommand) {
-			System.out.println("ServerProtocol - ASK_FILE_DESCRIPTOR");
+			Logger.debug("ServerProtocol - ASK_FILE_DESCRIPTOR");
 			String fileName = new String(this.readBytes());
 
 			return new AskForFileDefinition(fileName);
 		}
 		else if (Protocol.ASK_BLOCK == clientCommand) {
 			long blockNumber = this.readLong();
-			System.out.println("ServerProtocol - ASK_BLOCK " + blockNumber);
+			Logger.debug("ServerProtocol - ASK_BLOCK " + blockNumber);
 			return new AskForBlock(blockNumber);
 		}
 		else if (Protocol.ASK_END_CONNECTION == clientCommand) {
-			System.out.println("ServerProtocol - ASK_END_CONNECTION");
+			Logger.debug("ServerProtocol - ASK_END_CONNECTION");
 			return new AskForEndConnection();
 		}
 		else {
-			System.out.println("Unknown command " + clientCommand);
+			Logger.debug("Unknown command " + clientCommand);
 			return new UnknownCommand();
 		}			
 	}

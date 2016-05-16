@@ -3,12 +3,14 @@ package p2pRes.server;
 import java.io.IOException;
 import java.net.Socket;
 
+import p2pRes.log.Logger;
 import p2pRes.model.TransferableFile;
 import p2pRes.protocol.ProtocolException;
 import p2pRes.protocol.ServerProtocol;
 import p2pRes.protocol.response.AskForBlock;
 import p2pRes.protocol.response.AskForFileDefinition;
 import p2pRes.protocol.response.ProtocolResponse;
+import p2pRes.stats.StatInfo;
 
 public class ClientConnection implements Runnable {
 	private Socket client;
@@ -21,7 +23,9 @@ public class ClientConnection implements Runnable {
 	
 	@Override
 	public void run() {
-		System.out.println("ClientConnection - Running... ");      
+		Logger.info("ClientConnection - Running... ");  
+		StatInfo clientConnectionStat = new StatInfo("clientConnectionStat");
+		clientConnectionStat.start();
 		try {
 		    ServerProtocol serverProtocol = new ServerProtocol(client);
 		    TransferableFile transferableFile = null;
@@ -54,6 +58,9 @@ public class ClientConnection implements Runnable {
 			e.printStackTrace();
 		}
 		
-		System.out.println("ClientConnection - Ending...");  
+		clientConnectionStat.end();
+		Logger.info("ClientConnection - Ending...");  
+		Logger.info("Total time - " + clientConnectionStat.getStatTime() / 1000 + " sec");  
+		
 	}
 }

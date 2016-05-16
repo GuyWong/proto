@@ -3,6 +3,7 @@ package p2pRes.client;
 import java.io.IOException;
 import java.net.Socket;
 
+import p2pRes.log.Logger;
 import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
 import p2pRes.model.ReceivedFile;
@@ -25,11 +26,11 @@ public class Client {
 		
 		try {
 			FileDescriptor fileDescriptor = getFileDescriptorFromPeer(fileName, clientProtocol);
-			System.out.println("Client - Get FD OK " + fileDescriptor.getBlockNumbers());
+			Logger.debug("Client - Get FD OK " + fileDescriptor.getBlockNumbers());
 			 
 	        ReceivedFile receivedFile = initReceivingFile(outRep+"//"+fileName, fileDescriptor);  
 	        for (long blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
-	        	System.out.println(" writing " + fileName + " block " + blockNumber);
+	        	Logger.debug(" writing " + fileName + " block " + blockNumber);
 	        	Block block = getBlockFromPeer(blockNumber, clientProtocol);
 				receivedFile.writeBlock(blockNumber, block.getValue());
 	        }

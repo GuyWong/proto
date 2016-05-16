@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
+import p2pRes.log.Logger;
+
 
 //TODO : Fix that ugly behavior, every protocol part need to own his sender. 
 //if you reset a sender it wont crash after because you need a acknowledge send
@@ -76,7 +78,7 @@ public abstract class Protocol {
 		int size = (int)this.readLong();
 		byte[] buffer = new byte[size]; //todo : don't allocate everytime
 		try {
-			System.out.println("Protocol - readBytes size " + size);
+			Logger.debug("Protocol - readBytes size " + size);
 			socketReader.read(buffer, 0, size);
 			this.sendAcknowlegment();
 			return buffer;
@@ -89,7 +91,7 @@ public abstract class Protocol {
 		try {
 			this.sendLong(bytes.length);
 			socketSender.write(bytes, 0, bytes.length);
-			System.out.println("Protocol - sendBytes size " + bytes.length);
+			Logger.debug("Protocol - sendBytes size " + bytes.length);
 			socketSender.flush();
 			this.waitForAcknowlegment();
 		} catch (IOException e) {
