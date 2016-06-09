@@ -2,6 +2,7 @@ package p2pRes.client;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Random;
 
 import p2pRes.log.Logger;
 import p2pRes.model.Block;
@@ -29,7 +30,12 @@ public class Client {
 			Logger.debug("Client - Get FD OK " + fileDescriptor.getBlockNumbers());
 			 
 	        ReceivedFile receivedFile = initReceivingFile(outRep+"//"+fileName, fileDescriptor);  
-	        for (int blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
+	        //for (int blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
+	        //for (int blockNumber=receivedFile.getDescriptor().getBlockNumbers(); blockNumber>=0; blockNumber--) {
+	        Random random = new Random();
+	        while(!receivedFile.isComplete()) {
+	        	int blockNumber = random.nextInt(receivedFile.getDescriptor().getBlockNumbers());
+	        	if (receivedFile.isWrited(blockNumber)) {continue;}
 	        	Logger.debug(" writing " + fileName + " block " + blockNumber);
 	        	Block block = getBlockFromPeer(blockNumber, clientProtocol);
 				receivedFile.writeBlock(blockNumber, block.getValue());

@@ -9,6 +9,7 @@ public class ClientMain {
 		Logger.info("ClientMain...");
 
 		try {
+			//(new Client("192.168.1.76", 6667)).getFile("D://Dev//Workspace//test//out//", "test.mkv");
 			(new Client("127.0.0.1", 6667)).getFile("D://Dev//Workspace//test//out//", "test.mp4");
 		} catch (ClientException e) {
 			e.printStackTrace();

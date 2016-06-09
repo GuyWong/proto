@@ -11,13 +11,13 @@ public class SayHi {
 	public static void main(String[] args) {
 		Logger.info("Hi!");
 
-		Executors.newSingleThreadExecutor().execute(new Server(6667, /*to be asked in protocol*/"C://Dev//workspace//test//")); 
+		Executors.newSingleThreadExecutor().execute(new Server(6667, /*to be asked in protocol*/"D://Dev//Workspace//test//")); 
 		
 		try {
 			//(new Client("127.0.0.1", 6667)).getFile("C://Dev//workspace//test//out//", "test1.txt");
 			//(new Client("127.0.0.1", 6667)).getFile("C://Dev//workspace//test//out//", "test1.jpg");
 			//(new Client("127.0.0.1", 6667)).getFile("C://Dev//workspace//test//out//", "test1.zip");
-			(new Client("127.0.0.1", 6667)).getFile("C://Dev//workspace//test//out//", "test.mkv");
+			(new Client("127.0.0.1", 6667)).getFile("D://Dev//Workspace//test//out//", "test.mp4");
 		} catch (ClientException e) {
 			e.printStackTrace();
 		}
