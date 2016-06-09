@@ -29,7 +29,7 @@ public class Client {
 			Logger.debug("Client - Get FD OK " + fileDescriptor.getBlockNumbers());
 			 
 	        ReceivedFile receivedFile = initReceivingFile(outRep+"//"+fileName, fileDescriptor);  
-	        for (long blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
+	        for (int blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
 	        	Logger.debug(" writing " + fileName + " block " + blockNumber);
 	        	Block block = getBlockFromPeer(blockNumber, clientProtocol);
 				receivedFile.writeBlock(blockNumber, block.getValue());
@@ -70,7 +70,7 @@ public class Client {
 		}
 	}
 	
-	private Block getBlockFromPeer(long blockNumber, ClientProtocol peer) throws ClientException {
+	private Block getBlockFromPeer(int blockNumber, ClientProtocol peer) throws ClientException {
 		try {
 			return peer.askForBlock(blockNumber);
 		} catch (ProtocolException e) {

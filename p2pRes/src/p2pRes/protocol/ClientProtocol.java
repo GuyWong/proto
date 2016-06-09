@@ -23,10 +23,10 @@ public class ClientProtocol extends Protocol {
 		this.sendByte(Protocol.ASK_END_CONNECTION);
 	}
 	
-	public Block askForBlock(long blockNumber) throws ProtocolException {
+	public Block askForBlock(int blockNumber) throws ProtocolException {
 		Logger.debug("ClientProtocol - ASK_BLOCK " + blockNumber);
 		this.sendByte(Protocol.ASK_BLOCK);
-		this.sendLong(blockNumber);
+		this.sendInt(blockNumber);
 		
 		Block block = (Block)this.readObject();		
 		if (!block.checkHash()) {

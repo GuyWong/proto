@@ -1,41 +1,40 @@
 package p2pRes.model;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
+import java.util.Set;
 
+import p2pRes.io.MultiChannelFileWriter;
 import p2pRes.log.Logger;
 
 public class ReceivedFile { 
-	private long blockCounter = 0;//add a block map...
-	private SeekableByteChannel fileChannel;
+	private Set<Integer> blockSet = new HashSet<Integer>();
+	private MultiChannelFileWriter writer;
 	private FileDescriptor descriptor;
 	
 	
 	public ReceivedFile(String path, FileDescriptor descriptor) throws IOException {	
-		this.fileChannel = Files.newByteChannel(Paths.get(path), StandardOpenOption.CREATE, 
-																	StandardOpenOption.TRUNCATE_EXISTING, 
-																	StandardOpenOption.WRITE);
+		this.writer = new MultiChannelFileWriter(path);
 		this.descriptor = descriptor;
 	}
 	
 	public boolean isComplete() {
-		return blockCounter==this.descriptor.getBlockNumbers()?true:false;
+		return blockSet.size()==this.descriptor.getBlockNumbers();
+	}
+	
+	public boolean isWrited(int blockNumber) {
+		return blockSet.contains(blockNumber);
 	}
 	
 	public final FileDescriptor getDescriptor() {
 		return descriptor;
 	}
 
-	public void writeBlock(long blockNumber, byte[] block) {
+	public void writeBlock(int blockNumber, byte[] block) {
 		try {
 			Logger.debug(" ReceivedFile - writing block " + blockNumber + " size " + block.length);
-			this.fileChannel.position(this.descriptor.getPosition(blockNumber));
-			this.fileChannel.write(ByteBuffer.wrap(block));
-			this.blockCounter++;
+			writer.write(this.descriptor.getPosition(blockNumber), block);
+			this.blockSet.add(blockNumber);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

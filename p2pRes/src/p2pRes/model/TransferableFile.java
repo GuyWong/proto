@@ -19,7 +19,7 @@ public class TransferableFile {
 		return descriptor;
 	}
 	
-	public byte[] readBlock(long blockNumber) {
+	public byte[] readBlock(int blockNumber) {
 		ByteBuffer buffer = ByteBuffer.allocate(descriptor.getBlockSize(blockNumber));
 		
 		try {

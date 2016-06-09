@@ -26,7 +26,7 @@ public class ServerProtocol extends Protocol {
 			return new AskForFileDefinition(fileName);
 		}
 		else if (Protocol.ASK_BLOCK == clientCommand) {
-			long blockNumber = this.readLong();
+			int blockNumber = this.readInt();
 			Logger.debug("ServerProtocol - ASK_BLOCK " + blockNumber);
 			return new AskForBlock(blockNumber);
 		}

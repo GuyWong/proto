@@ -55,7 +55,25 @@ public abstract class Protocol {
 		}
 	}
 	
-	protected long readLong() throws ProtocolException {
+	protected int readInt() throws ProtocolException {
+		try {
+			byte[] encodedValue = new byte[Integer.SIZE / Byte.SIZE];
+			socketReader.read(encodedValue);
+			return ByteBuffer.wrap(encodedValue).getInt();
+		} catch (IOException e) {
+			throw new ProtocolException(e);
+		}
+	}
+	
+	protected void sendInt(int value) throws ProtocolException {
+		try {
+			socketSender.write(ByteBuffer.allocate(Integer.SIZE / Byte.SIZE).putInt(value).array());
+		} catch (IOException e) {
+			throw new ProtocolException(e);
+		}
+	}
+	
+	/*protected long readLong() throws ProtocolException {
 		try {
 			byte[] encodedValue = new byte[Long.SIZE / Byte.SIZE];
 			socketReader.read(encodedValue);
@@ -71,11 +89,11 @@ public abstract class Protocol {
 		} catch (IOException e) {
 			throw new ProtocolException(e);
 		}
-	}
+	}*/
 	
 	
 	protected byte[] readBytes() throws ProtocolException {
-		int size = (int)this.readLong();
+		int size = (int)this.readInt();
 		byte[] buffer = new byte[size]; //todo : don't allocate everytime
 		try {
 			Logger.debug("Protocol - readBytes size " + size);
@@ -89,7 +107,7 @@ public abstract class Protocol {
 	
 	protected void sendBytes(byte[] bytes) throws ProtocolException {
 		try {
-			this.sendLong(bytes.length);
+			this.sendInt(bytes.length);
 			socketSender.write(bytes, 0, bytes.length);
 			Logger.debug("Protocol - sendBytes size " + bytes.length);
 			socketSender.flush();
