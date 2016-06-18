@@ -1,33 +1,39 @@
 package p2pRes.server;
 
-import java.io.IOException;
 import java.net.Socket;
 
-import p2pRes.log.Logger;
-import p2pRes.model.TransferableFile;
-import p2pRes.protocol.ProtocolException;
-import p2pRes.protocol.ServerProtocol;
-import p2pRes.protocol.response.AskForBlock;
-import p2pRes.protocol.response.AskForFileDefinition;
-import p2pRes.protocol.response.ProtocolResponse;
-import p2pRes.stats.StatInfo;
-
-public class ClientConnection implements Runnable {
-	private Socket client;
-	private String sharedRep;
+public abstract class ClientConnection implements Runnable {
+	//private ExecutorService childConnectionsPool;
+	private Server serverInstance;
+	private Socket clientSocket;
+	//private String sharedRep;
 	
-	public ClientConnection(Socket client, String sharedRep) {
-		this.sharedRep = sharedRep;
-		this.client = client;
+	public ClientConnection(Server serverInstance, 
+							Socket clientSocket//, 
+							//int maxClientConnections, 
+							/*String sharedRep*/) {
+		//this.sharedRep = sharedRep;
+		this.serverInstance = serverInstance;
+		this.clientSocket = clientSocket;
+		//this.childConnectionsPool = Executors.newFixedThreadPool(maxClientConnections);
 	}
 	
+	protected Socket getClientSocket() {
+		return clientSocket;
+	}
+	
+	protected Server getServerInstance() {
+		return serverInstance;
+	}
+	
+	/*@SuppressWarnings("resource")
 	@Override
 	public void run() {
 		Logger.info("ClientConnection - Running... ");  
 		StatInfo clientConnectionStat = new StatInfo("clientConnectionStat");
 		clientConnectionStat.start();
 		try {
-		    ServerProtocol serverProtocol = new ServerProtocol(client);
+		    ServerProtocol serverProtocol = new ServerProtocol(clientSocket);
 		    TransferableFile transferableFile = null;
 		    
 			while (true) {
@@ -44,6 +50,12 @@ public class ClientConnection implements Runnable {
 				if (ProtocolResponse.Command.ASK_FOR_BLOCK == response.getCommand()) {
 					serverProtocol.sendBlock(transferableFile.readBlock(((AskForBlock)response).getBlockNumber()));
 				}
+				if (ProtocolResponse.Command.ASK_NEWCONNECTION == response.getCommand()) {
+					int portNumber = this.serverInstance.bindNewPort();
+					ServerSocket server = new ServerSocket(portNumber);
+					this.childConnectionsPool.execute(new ClientConnection(this.serverInstance, server.accept(), 0, sharedRep) );
+					serverProtocol.sendPortNumber(portNumber);
+				}
 				if (ProtocolResponse.Command.ASK_ENDCONNECTION == response.getCommand()) {
 					break;
 				}
@@ -56,11 +68,14 @@ public class ClientConnection implements Runnable {
 		catch (ServerException e) {
 			//TODO: everything is fatal for now, handle a more subtle return status
 			e.printStackTrace();
+		} catch (IOException e) {
+			//TODO: everything is fatal for now, handle a more subtle return status
+			e.printStackTrace();
 		}
 		
 		clientConnectionStat.end();
 		Logger.info("ClientConnection - Ending...");  
 		Logger.info("Total time - " + clientConnectionStat.getStatTime() / 1000 + " sec");  
 		
-	}
+	}*/
 }

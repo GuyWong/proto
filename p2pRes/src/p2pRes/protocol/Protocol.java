@@ -17,7 +17,9 @@ public abstract class Protocol {
 	protected final static byte ASK_FILE_DESCRIPTOR = 0;
 	protected final static byte ASK_BLOCK = 1;
 	protected final static byte ACK = 2;
-	protected final static byte ASK_END_CONNECTION = 3;
+	protected final static byte ASK_NEW_CONNECTION = 3;
+	protected final static byte ASK_END_CONNECTION = 4;
+	
 
 	private InputStream socketReader;
 	private OutputStream socketSender;
@@ -40,7 +42,10 @@ public abstract class Protocol {
 		
 	protected byte readByte() throws ProtocolException {
 		try {
-			return (byte) socketReader.read();
+			byte val = (byte) socketReader.read();
+			Logger.debug("readByte " + val);
+			return val;
+			//return (byte) socketReader.read();
 		} catch (IOException e) {
 			throw new ProtocolException(e);
 		}
@@ -50,6 +55,7 @@ public abstract class Protocol {
 		try {
 			socketSender.write(value);
 			socketSender.flush();
+			Logger.debug("sendByte " + value);
 		} catch (IOException e) {
 			throw new ProtocolException(e);
 		}
@@ -59,7 +65,10 @@ public abstract class Protocol {
 		try {
 			byte[] encodedValue = new byte[Integer.SIZE / Byte.SIZE];
 			socketReader.read(encodedValue);
-			return ByteBuffer.wrap(encodedValue).getInt();
+			int val = ByteBuffer.wrap(encodedValue).getInt();
+			Logger.debug("readInt " + val);
+			return val;
+			//return ByteBuffer.wrap(encodedValue).getInt();
 		} catch (IOException e) {
 			throw new ProtocolException(e);
 		}
@@ -67,31 +76,15 @@ public abstract class Protocol {
 	
 	protected void sendInt(int value) throws ProtocolException {
 		try {
+			//byte[] sentArray = ByteBuffer.allocate(Integer.SIZE / Byte.SIZE).putInt(value).array();
 			socketSender.write(ByteBuffer.allocate(Integer.SIZE / Byte.SIZE).putInt(value).array());
+			socketSender.flush();
+			Logger.debug("sendInt " + value);
 		} catch (IOException e) {
 			throw new ProtocolException(e);
 		}
 	}
-	
-	/*protected long readLong() throws ProtocolException {
-		try {
-			byte[] encodedValue = new byte[Long.SIZE / Byte.SIZE];
-			socketReader.read(encodedValue);
-			return ByteBuffer.wrap(encodedValue).getLong();
-		} catch (IOException e) {
-			throw new ProtocolException(e);
-		}
-	}
-	
-	protected void sendLong(long value) throws ProtocolException {
-		try {
-			socketSender.write(ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(value).array());
-		} catch (IOException e) {
-			throw new ProtocolException(e);
-		}
-	}*/
-	
-	
+
 	protected byte[] readBytes() throws ProtocolException {
 		int size = (int)this.readInt();
 		byte[] buffer = new byte[size]; //todo : don't allocate everytime
@@ -109,8 +102,8 @@ public abstract class Protocol {
 		try {
 			this.sendInt(bytes.length);
 			socketSender.write(bytes, 0, bytes.length);
-			Logger.debug("Protocol - sendBytes size " + bytes.length);
 			socketSender.flush();
+			Logger.debug("Protocol - sendBytes size " + bytes.length);
 			this.waitForAcknowlegment();
 		} catch (IOException e) {
 			throw new ProtocolException(e);
@@ -148,6 +141,7 @@ public abstract class Protocol {
 		while (true/*set an escape timeout*/) {
 			byte command = this.readByte();
 			if (ACK==command) {
+				Logger.debug("Protocol - waitForAcknowlegment ");
 				return;
 			}	
 			throw new ProtocolException("Unexpected byte received " + command + " ACK expected");
@@ -156,5 +150,6 @@ public abstract class Protocol {
 	
 	private void sendAcknowlegment() throws ProtocolException {
 		this.sendByte(ACK);
+		Logger.debug("Protocol - sendAcknowlegment ");
 	}
 }

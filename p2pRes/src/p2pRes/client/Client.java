@@ -2,19 +2,24 @@ package p2pRes.client;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import p2pRes.log.Logger;
-import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
-import p2pRes.model.ReceivedFile;
+import p2pRes.model.FileHandler;
 import p2pRes.protocol.ClientProtocol;
 import p2pRes.protocol.ProtocolException;
 
 public class Client {
+	private final static int MAX_CLIENT_CONNECTION = 5;//to be parametrized
+	String netAdress;
 	private Socket server;
+	private ExecutorService blockFetcherPool;
 	
 	public Client (String netAdress, int port) throws ClientException {
+		this.netAdress = netAdress;
+		this.blockFetcherPool = Executors.newFixedThreadPool(MAX_CLIENT_CONNECTION);
 		try {
 			this.server = new Socket(netAdress, port);
 		} catch (IOException e) {
@@ -29,20 +34,27 @@ public class Client {
 			FileDescriptor fileDescriptor = getFileDescriptorFromPeer(fileName, clientProtocol);
 			Logger.debug("Client - Get FD OK " + fileDescriptor.getBlockNumbers());
 			 
-	        ReceivedFile receivedFile = initReceivingFile(outRep+"//"+fileName, fileDescriptor);  
-	        //for (int blockNumber=0; blockNumber<receivedFile.getDescriptor().getBlockNumbers(); blockNumber++) {
-	        //for (int blockNumber=receivedFile.getDescriptor().getBlockNumbers(); blockNumber>=0; blockNumber--) {
-	        Random random = new Random();
-	        while(!receivedFile.isComplete()) {
-	        	int blockNumber = random.nextInt(receivedFile.getDescriptor().getBlockNumbers());
-	        	if (receivedFile.isWrited(blockNumber)) {continue;}
-	        	Logger.debug(" writing " + fileName + " block " + blockNumber);
-	        	Block block = getBlockFromPeer(blockNumber, clientProtocol);
-				receivedFile.writeBlock(blockNumber, block.getValue());
+	        FileHandler receivedFile = initReceivingFile(outRep+"//"+fileName, fileDescriptor); 
+	        
+	        for (int i=0; i<MAX_CLIENT_CONNECTION; i++) {
+	        	int port;
+				try {
+					port = clientProtocol.askForNewConnection();
+					Logger.debug("Client - new connection, port number: " + port);
+				} catch (ProtocolException e) {
+					throw new ClientException("Can't establish new connection", e);//Todo handle error, do not hardquit
+				}
+	        	blockFetcherPool.execute(new PeerBlockFetcher(netAdress, port, receivedFile));
 	        }
+	        
+	        while (!receivedFile.isComplete()) { //todo ugly !
+	        	try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {Logger.debug(e.getMessage());}
+			}
 		}
 		finally {
-			try {
+			try {			
 				clientProtocol.askEndConnection();
 			} catch (ProtocolException e) {
 				// TODO Auto-generated catch block
@@ -59,9 +71,9 @@ public class Client {
 		}
 	}
 	
-	private ReceivedFile initReceivingFile(String path, FileDescriptor fileDescriptor) throws ClientException {
+	private FileHandler initReceivingFile(String path, FileDescriptor fileDescriptor) throws ClientException {
 		try {
-			return new ReceivedFile(path, fileDescriptor);
+			return new FileHandler(path, fileDescriptor);
 		} catch (IOException e) {
 			throw new ClientException("Error initializing ReceivingFile " + path, e);
 		}
@@ -73,14 +85,6 @@ public class Client {
 			return peer.getFileDescriptor(fileName);
 		} catch (ProtocolException e) {
 			throw new ClientException("Error getting file descriptor for " + fileName + " from peer", e);
-		}
-	}
-	
-	private Block getBlockFromPeer(int blockNumber, ClientProtocol peer) throws ClientException {
-		try {
-			return peer.askForBlock(blockNumber);
-		} catch (ProtocolException e) {
-			throw new ClientException("Error getting block " + blockNumber + " from peer", e);
 		}
 	}
 }

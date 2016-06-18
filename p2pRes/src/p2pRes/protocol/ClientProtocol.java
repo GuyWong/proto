@@ -1,6 +1,7 @@
 package p2pRes.protocol;
 
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 import p2pRes.log.Logger;
 import p2pRes.model.Block;
@@ -16,6 +17,17 @@ public class ClientProtocol extends Protocol {
 		this.sendByte(Protocol.ASK_FILE_DESCRIPTOR);
 		this.sendBytes(fileName.getBytes());
 		return (FileDescriptor)this.readObject();	
+	}
+	
+	public int askForNewConnection() throws ProtocolException {
+		Logger.debug("ClientProtocol - ASK_NEW_CONNECTION");
+		this.sendByte(Protocol.ASK_NEW_CONNECTION);
+		int val = this.readInt();
+		Logger.debug("ClientProtocol - askForNewConnection trash " + val );
+		val = this.readInt();// fucking bug ! fix this
+		Logger.debug("ClientProtocol - askForNewConnection " + val );
+		return val;
+		//return this.readInt();
 	}
 	
 	public void askEndConnection() throws ProtocolException {

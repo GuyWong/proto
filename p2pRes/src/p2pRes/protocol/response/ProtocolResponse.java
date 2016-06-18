@@ -1,7 +1,7 @@
 package p2pRes.protocol.response;
 
 public abstract class ProtocolResponse {
-	public enum Command {ASK_FOR_FILEDEFINITION, ASK_FOR_BLOCK, ASK_ENDCONNECTION, UNKNOWN_COMMAND}
+	public enum Command {ASK_FOR_FILEDEFINITION, ASK_FOR_BLOCK, ASK_NEWCONNECTION, ASK_ENDCONNECTION, UNKNOWN_COMMAND}
 	
 	
 	private final Command command;

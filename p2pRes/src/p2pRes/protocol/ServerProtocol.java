@@ -1,6 +1,7 @@
 package p2pRes.protocol;
 
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 import p2pRes.log.Logger;
 import p2pRes.model.Block;
@@ -8,6 +9,7 @@ import p2pRes.model.FileDescriptor;
 import p2pRes.protocol.response.AskForBlock;
 import p2pRes.protocol.response.AskForEndConnection;
 import p2pRes.protocol.response.AskForFileDefinition;
+import p2pRes.protocol.response.AskForNewConnection;
 import p2pRes.protocol.response.ProtocolResponse;
 import p2pRes.protocol.response.UnknownCommand;
 
@@ -30,6 +32,10 @@ public class ServerProtocol extends Protocol {
 			Logger.debug("ServerProtocol - ASK_BLOCK " + blockNumber);
 			return new AskForBlock(blockNumber);
 		}
+		else if (Protocol.ASK_NEW_CONNECTION == clientCommand) {
+			Logger.debug("ServerProtocol - ASK_NEW_CONNECTION");
+			return new AskForNewConnection();
+		}
 		else if (Protocol.ASK_END_CONNECTION == clientCommand) {
 			Logger.debug("ServerProtocol - ASK_END_CONNECTION");
 			return new AskForEndConnection();
@@ -46,5 +52,9 @@ public class ServerProtocol extends Protocol {
 		
 	public void sendBlock(byte[] bytes) throws ProtocolException {
 		this.sendObject(new Block(bytes));
+	}
+	
+	public void sendPortNumber(int portNumber) throws ProtocolException {
+		this.sendInt(portNumber);
 	}
 }
