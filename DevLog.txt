@@ -15,3 +15,13 @@ git clone https://github.com/GuyWong/proto
 => set name for commit
 git config --global user.name "GuyWong"
 git config --global user.email "somewere@dtc.com"
+
+=>Maven config
+extract to dev/maven
+add "D:\Dev\maven\bin" to PATH variable
+check if "mvn -v" command work
+
+WARNING javac path has to be set and JAVA_HOME as well !
+C:\Program Files (x86)\Java\jdk1.8.0_92\bin
+JAVA_HOME=C:\Program Files (x86)\Java\jdk1.8.0_92
+
