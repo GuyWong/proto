@@ -31,7 +31,6 @@ public class MainClientConnection extends ClientConnection {
 	 * Need to handle the case where the same client asking more than one file
 	 */
 	@SuppressWarnings("resource")
-	@Override
 	public void run() {
 		Logger.info("MainClientConnection - Running... ");  
 		StatInfo clientConnectionStat = new StatInfo("clientConnectionStat");

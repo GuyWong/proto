@@ -27,9 +27,7 @@ public class PeerBlockFetcher implements Runnable  { //rename it, somethink like
 		this.fileHandler = fileHandler;
 	}
 	
-	@Override
-	public void run() {
-		
+	public void run() {		
 		try {
 			Thread.sleep(1000000);
 		} catch (InterruptedException e) {Logger.debug(e.getMessage());}
