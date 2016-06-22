@@ -1,8 +1,6 @@
 package p2pRes.protocol;
 
 import java.net.Socket;
-import java.nio.ByteBuffer;
-
 import p2pRes.log.Logger;
 import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
