@@ -17,7 +17,7 @@ public class SayHi {
 			//(new Client("127.0.0.1", 6667)).getFile("C://Dev//workspace//test//out//", "test1.txt");
 			//(new Client("127.0.0.1", 6667)).getFile("C://Dev//workspace//test//out//", "test1.jpg");
 			//(new Client("127.0.0.1", 6667)).getFile("C://Dev//workspace//test//out//", "test1.zip");
-			(new Client("127.0.0.1", 6667)).getFile("D://Dev//Workspace//test//out//", "test.mp4");
+			(new Client("127.0.0.1", 6667)).getFile("D://Dev//Workspace//test//out//", "test.mkv");
 		} catch (ClientException e) {
 			e.printStackTrace();
 		}
