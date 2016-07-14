@@ -24,8 +24,8 @@ public class FileDescriptor implements Serializable {
 		return (int) ((blockNumber==(blockNumbers-1))?(fileSize%BLOC_SIZE):BLOC_SIZE);
 	}
 	
-	public int getPosition(int blockNumber) {
-		return blockNumber*BLOC_SIZE;
+	public long getPosition(int blockNumber) {
+		return ((long)blockNumber)*BLOC_SIZE;
 	}
 	
 	public long getFileSize() {

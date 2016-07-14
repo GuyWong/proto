@@ -1,18 +1,21 @@
 package p2pRes.client;
 
+import java.util.List;
 import java.io.IOException;
 import java.net.Socket;
-
+import java.util.ArrayList;
 import p2pRes.log.Logger;
 import p2pRes.model.Block;
 import p2pRes.model.FileHandler;
+import p2pRes.model.FileHandlerException;
 import p2pRes.protocol.ClientProtocol;
 import p2pRes.protocol.ProtocolException;
 
-public class PeerBlockFetcher implements Runnable  { //rename it, somethink like blockfetcherworker
+public class PeerBlockFetcher implements Runnable  {
 	private Socket server;
 	private ClientProtocol clientProtocol;
 	private FileHandler fileHandler;
+	private List<Exception> errorStack = new ArrayList<Exception>();
 	
 	public PeerBlockFetcher (String netAdress, 
 								int port, 
@@ -28,23 +31,29 @@ public class PeerBlockFetcher implements Runnable  { //rename it, somethink like
 	}
 	
 	public void run() {		
-		try {
-			Thread.sleep(1000000);
-		} catch (InterruptedException e) {Logger.debug(e.getMessage());}
-		
 		while (!fileHandler.isComplete()) {
 			int blockNumber = fileHandler.assignNewEmptyBlockNumber();
+			if (blockNumber == FileHandler.NO_MORE_BLOCK_AVAILABLE) { break; }
 			try {
 				Block block = this.getBlockFromPeer(blockNumber, clientProtocol);
-				
 				if (block == null) {
 					throw new ClientException("Invalid block received, block number: " + blockNumber);
 				}
 				
-				fileHandler.writeBlock(blockNumber, block.getValue());
+				try {
+					fileHandler.writeBlock(blockNumber, block.getValue());
+				} catch (FileHandlerException e) {
+					fileHandler.unassignBlockNumber(blockNumber);
+					throw new ClientException("Writing of block " + blockNumber + " failed", e);
+				}
+				Logger.debug("PeerBlockFetcher - " 
+								+ server.getLocalAddress() + ":" + server.getPort() 
+								+ " block " + blockNumber + " size "  + block.getValue().length 
+								+ " writed...");
 			} catch (ClientException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				//TODO: handle fatal errors (max peer retry etc...)
+				errorStack.add(e);
+				Logger.debug("PeerBlockFetcher error!! " + e.getMessage());
 			}
 		}
 	}

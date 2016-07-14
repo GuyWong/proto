@@ -1,7 +1,6 @@
 package p2pRes.protocol;
 
 import java.net.Socket;
-import p2pRes.log.Logger;
 import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
 import p2pRes.protocol.response.AskForBlock;
@@ -18,28 +17,19 @@ public class ServerProtocol extends Protocol {
 
 	public ProtocolResponse handleInstruction() throws ProtocolException {
 		byte clientCommand = this.readByte();
-		Logger.debug("ServerProtocol - handleInstruction " + clientCommand);  
 		if (Protocol.ASK_FILE_DESCRIPTOR == clientCommand) {
-			Logger.debug("ServerProtocol - ASK_FILE_DESCRIPTOR");
-			String fileName = new String(this.readBytes());
-
-			return new AskForFileDefinition(fileName);
+			return new AskForFileDefinition(new String(this.readBytes()));
 		}
 		else if (Protocol.ASK_BLOCK == clientCommand) {
-			int blockNumber = this.readInt();
-			Logger.debug("ServerProtocol - ASK_BLOCK " + blockNumber);
-			return new AskForBlock(blockNumber);
+			return new AskForBlock(this.readInt());
 		}
 		else if (Protocol.ASK_NEW_CONNECTION == clientCommand) {
-			Logger.debug("ServerProtocol - ASK_NEW_CONNECTION");
 			return new AskForNewConnection();
 		}
 		else if (Protocol.ASK_END_CONNECTION == clientCommand) {
-			Logger.debug("ServerProtocol - ASK_END_CONNECTION");
 			return new AskForEndConnection();
 		}
 		else {
-			Logger.debug("Unknown command " + clientCommand);
 			return new UnknownCommand();
 		}			
 	}
@@ -50,6 +40,7 @@ public class ServerProtocol extends Protocol {
 		
 	public void sendBlock(byte[] bytes) throws ProtocolException {
 		this.sendObject(new Block(bytes));
+		//this.sendBytes(bytes);
 	}
 	
 	public void sendPortNumber(int portNumber) throws ProtocolException {

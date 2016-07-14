@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import p2pRes.log.Logger;
 import p2pRes.model.FileDescriptor;
 import p2pRes.model.FileHandler;
+import p2pRes.model.FileHandlerException;
 import p2pRes.protocol.ClientProtocol;
 import p2pRes.protocol.ProtocolException;
 
@@ -74,7 +75,7 @@ public class Client {
 	private FileHandler initReceivingFile(String path, FileDescriptor fileDescriptor) throws ClientException {
 		try {
 			return new FileHandler(path, fileDescriptor);
-		} catch (IOException e) {
+		} catch (FileHandlerException e) {
 			throw new ClientException("Error initializing ReceivingFile " + path, e);
 		}
 	}
