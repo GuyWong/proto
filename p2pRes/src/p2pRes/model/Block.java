@@ -21,4 +21,8 @@ public class Block implements Serializable  {
 	public byte[] getValue() {
 		return value;
 	}
+	
+	protected String getHashValue() {
+		return hash;
+	}
 }

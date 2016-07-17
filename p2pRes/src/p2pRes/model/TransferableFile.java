@@ -1,34 +1,39 @@
 package p2pRes.model;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import p2pRes.io.FileReader;
+import p2pRes.io.ReaderException;
+import p2pRes.utils.FileHashBuilder;
+import p2pRes.utils.HashBuilderException;
 
 public class TransferableFile {
-	private FileDescriptor descriptor;
-	private SeekableByteChannel fileChannel;
+	private final FileDescriptor descriptor;
 	
-	public TransferableFile(String path) throws IOException {
-		this.fileChannel = Files.newByteChannel(Paths.get(path));
-		this.descriptor = new FileDescriptor(this.fileChannel.size());
+	private FileReader fileReader;
+	
+	public TransferableFile(String path, int blockSize) throws FileHandlerException {
+		
+		try {
+			this.fileReader = new FileReader(path);
+			this.descriptor = new FileDescriptor(this.fileReader.getFileSize(), 
+													blockSize,
+													(new FileHashBuilder(path)).build());
+		} catch (ReaderException e) {
+			throw new FileHandlerException("Can't open file " + path, e);
+		} catch (HashBuilderException e) {
+			throw new FileHandlerException("Can't compute file hash", e);
+		}
 	}
 	
 	public final FileDescriptor getDescriptor() {
 		return descriptor;
 	}
 	
-	public byte[] readBlock(int blockNumber) {
-		ByteBuffer buffer = ByteBuffer.allocate(descriptor.getBlockSize(blockNumber));
-		
+	public byte[] readBlock(int blockNumber) throws FileHandlerException {
 		try {
-			fileChannel.position(descriptor.getPosition(blockNumber));
-			fileChannel.read(buffer);
-			return buffer.array();
-		} catch (IOException e1) {
-			e1.printStackTrace();//TODO
-			return null;
+			return fileReader.read(descriptor.getBlocksDescriptor().getPosition(blockNumber), 
+									descriptor.getBlocksDescriptor().getBlockSize(blockNumber));
+		} catch (ReaderException e) {
+			throw new FileHandlerException("Can't read block " + 	blockNumber, e);
 		}
 	}
 }

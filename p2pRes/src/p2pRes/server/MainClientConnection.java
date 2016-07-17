@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import p2pRes.log.Logger;
+import p2pRes.model.FileHandlerException;
 import p2pRes.model.TransferableFile;
 import p2pRes.protocol.ProtocolException;
 import p2pRes.protocol.ServerProtocol;
@@ -14,6 +15,10 @@ import p2pRes.protocol.response.ProtocolResponse;
 import p2pRes.stats.StatInfo;
 
 public class MainClientConnection extends ClientConnection {
+	private static final int BLOC_SIZE = 1024*100;//To be parametized //100ko seems the best
+												  //100ko = 214748to max file size
+												  //1ko = 2147to max file size
+	
 	private ExecutorService childConnectionsPool;
 	private String sharedRep;
 	
@@ -44,8 +49,8 @@ public class MainClientConnection extends ClientConnection {
 				if (ProtocolResponse.Command.ASK_FOR_FILEDEFINITION == response.getCommand()) {
 					String filePath = sharedRep + "//" + ((AskForFileDefinition)response).getFileName();
 					try {
-						transferableFile = new TransferableFile(filePath);
-					} catch (IOException e) {
+						transferableFile = new TransferableFile(filePath, BLOC_SIZE);
+					} catch (FileHandlerException e) {
 						throw new ServerException("Can't read file " + filePath, e);
 					}
 					serverProtocol.sendFileDescriptor(transferableFile.getDescriptor());

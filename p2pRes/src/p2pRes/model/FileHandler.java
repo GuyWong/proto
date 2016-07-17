@@ -26,11 +26,11 @@ public class FileHandler {
 	}
 	
 	public synchronized boolean isComplete() {
-		return this.writedBlocksSet.size()==this.descriptor.getBlockNumbers();
+		return this.writedBlocksSet.size()==this.descriptor.getBlocksDescriptor().getBlockNumbers();
 	}
 	
 	public synchronized int assignNewEmptyBlockNumber() {
-		for (int i=0; i<this.descriptor.getBlockNumbers(); i++) {
+		for (int i=0; i<this.descriptor.getBlocksDescriptor().getBlockNumbers(); i++) {
 			if (!this.assignedBlocksSet.contains(i)) {
 				this.assignedBlocksSet.add(i);
 				return i;
@@ -49,7 +49,7 @@ public class FileHandler {
 
 	public synchronized void writeBlock(int blockNumber, byte[] block) throws FileHandlerException {
 		try {
-			this.writer.write(this.descriptor.getPosition(blockNumber), block);
+			this.writer.write(this.descriptor.getBlocksDescriptor().getPosition(blockNumber), block);
 			this.writedBlocksSet.add(blockNumber);
 		} catch (WriterException e) {
 			throw new FileHandlerException("Writing of block " + blockNumber + " failed", e);

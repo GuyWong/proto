@@ -42,6 +42,7 @@ public class PeerBlockFetcher implements Runnable  {
 				
 				try {
 					fileHandler.writeBlock(blockNumber, block.getValue());
+					
 				} catch (FileHandlerException e) {
 					fileHandler.unassignBlockNumber(blockNumber);
 					throw new ClientException("Writing of block " + blockNumber + " failed", e);

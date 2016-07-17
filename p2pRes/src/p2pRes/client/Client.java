@@ -11,6 +11,8 @@ import p2pRes.model.FileHandler;
 import p2pRes.model.FileHandlerException;
 import p2pRes.protocol.ClientProtocol;
 import p2pRes.protocol.ProtocolException;
+import p2pRes.utils.FileHashBuilder;
+import p2pRes.utils.HashBuilderException;
 
 public class Client {
 	private final static int MAX_CLIENT_CONNECTION = 5;//to be parametrized
@@ -33,7 +35,7 @@ public class Client {
 		
 		try {
 			FileDescriptor fileDescriptor = getFileDescriptorFromPeer(fileName, clientProtocol);
-			Logger.debug("Client - Get FD OK " + fileDescriptor.getBlockNumbers());
+			Logger.debug("Client - Get FD OK " + fileDescriptor.getBlocksDescriptor().getBlockNumbers());
 			 
 	        FileHandler receivedFile = initReceivingFile(outRep+"//"+fileName, fileDescriptor); 
 	        
@@ -48,11 +50,18 @@ public class Client {
 	        	blockFetcherPool.execute(new PeerBlockFetcher(netAdress, port, receivedFile));
 	        }
 	        
-	        while (!receivedFile.isComplete()) { //todo ugly !
+	        while (!receivedFile.isComplete()) { //TODO ugly !
 	        	try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {Logger.debug(e.getMessage());}
 			}
+	        
+	        if (checkReceivedFile(outRep+"//"+fileName, fileDescriptor)) {
+	        	Logger.error("ERROR ! file hash not equal !!"); //TODO
+	        }
+	        else {
+	        	Logger.info("File hash check is fine !"); //TODO
+	        }
 		}
 		finally {
 			try {			
@@ -61,6 +70,16 @@ public class Client {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+	}
+	
+	private boolean checkReceivedFile(String receivedFilePath, FileDescriptor fileDescriptor) { //TODO: proper impl
+		try {
+			return fileDescriptor.getFileHash().equals((new FileHashBuilder(receivedFilePath)).build());
+		} catch (HashBuilderException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
 		}
 	}
 	
