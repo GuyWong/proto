@@ -3,5 +3,5 @@
 p2pRes/.project
 p2pRes/.classpath
 p2pRes/.settings
-test
+./test
 target
