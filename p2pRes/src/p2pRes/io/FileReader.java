@@ -25,7 +25,7 @@ public class FileReader {
 		}
 	}
 	
-	public byte[] read(long position, int sizeToRead) throws ReaderException {
+	public synchronized byte[] read(long position, int sizeToRead) throws ReaderException {
 		ByteBuffer buffer = ByteBuffer.allocate(sizeToRead);
 		
 		try {
