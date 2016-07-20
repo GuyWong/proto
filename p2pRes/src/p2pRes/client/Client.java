@@ -57,10 +57,11 @@ public class Client {
 			}
 	        
 	        if (checkReceivedFile(outRep+"//"+fileName, fileDescriptor)) {
-	        	Logger.error("ERROR ! file hash not equal !!"); //TODO
+	        	Logger.info("File hash check is fine !"); //TODO
 	        }
 	        else {
-	        	Logger.info("File hash check is fine !"); //TODO
+	        	Logger.error("ERROR ! file hash not equal !!"); //TODO
+	        	
 	        }
 		}
 		finally {
@@ -75,6 +76,7 @@ public class Client {
 	
 	private boolean checkReceivedFile(String receivedFilePath, FileDescriptor fileDescriptor) { //TODO: proper impl
 		try {
+			//return fileDescriptor.getFileHash().equals((new FileHashBuilder(receivedFilePath)).build());
 			return fileDescriptor.getFileHash().equals((new FileHashBuilder(receivedFilePath)).build());
 		} catch (HashBuilderException e) {
 			// TODO Auto-generated catch block

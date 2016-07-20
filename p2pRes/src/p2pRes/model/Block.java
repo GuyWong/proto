@@ -17,7 +17,7 @@ public class Block implements Serializable  {
 	public boolean checkHash() {
 		return hash.equals((new HashBuilder(value)).build());
 	}
-	
+
 	public byte[] getValue() {
 		return value;
 	}

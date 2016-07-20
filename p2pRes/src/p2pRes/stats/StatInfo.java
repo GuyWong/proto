@@ -18,7 +18,7 @@ public class StatInfo {
 	}
 	
 	public void end() {
-		statTime = startTime - System.currentTimeMillis();
+		statTime =  System.currentTimeMillis() - startTime;
 	}
 	
 	public long getStatTime() {

@@ -3,8 +3,14 @@ package p2pRes.utils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+@SuppressWarnings("unused")
 public class HashBuilder {
-	private final static String ALGO = "SHA-256";
+	private final static String ALGO_SHA1 = "SHA-1";
+	private final static String ALGO_SHA256 = "SHA-256";
+	private final static String ALGO_SHA2 = "SHA-2";
+	private final static String ALGO_SKEIN512 = "SKEIN-512";
+	
+	private final static String ALGO = ALGO_SKEIN512;
 	
 	private final byte[] message;
 	
@@ -13,9 +19,16 @@ public class HashBuilder {
 	}
  
     public String build() {
-        return hash(message, ALGO);
+    	if (ALGO_SKEIN512.equals(ALGO)) {
+    		return hashSkein512(message);
+    	}
+    	return hash(message, ALGO);
     }
- 
+    
+    public String buildSkein512() {
+        return hashSkein512(message);
+    }
+    
     private String hash(byte[] message, String algorithm) {
         try {
             MessageDigest digest = MessageDigest.getInstance(algorithm);
@@ -25,6 +38,12 @@ public class HashBuilder {
         } catch (NoSuchAlgorithmException e) {
             return "";
         }
+    }
+    
+    private String hashSkein512(byte[] message) {
+    	byte[] digest = new byte[64];
+    	Skein512.hash(message, digest);
+    	return convertByteArrayToHexString(digest);
     }
  
     private String convertByteArrayToHexString(byte[] arrayBytes) {

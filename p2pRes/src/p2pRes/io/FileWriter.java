@@ -28,6 +28,5 @@ public class FileWriter {
 		} catch (IOException e) {
 			throw new WriterException("Can't write data on file", e);
 		}
-		
 	}
 }
