@@ -1,10 +1,16 @@
 package p2pRes.utils;
 
 import org.junit.Test;
-import junit.framework.Assert;
+import p2pRes.stats.StatInfo;
+import p2pRes.stats.Stats;
+import p2pRes.tools.FileComparator;
+import org.junit.Assert;
 
+@SuppressWarnings("unused")
 public class HashBuilderTest {
-	private final String hash = "05e8c7a34e61aee63b3ea2a27ade55c925e04b7f6dc723784290cca01b4dc749";
+	private final String hash_SHA256 = "05e8c7a34e61aee63b3ea2a27ade55c925e04b7f6dc723784290cca01b4dc749";
+	private final String hash_SKEIN512 = "d7994e957db6230dfa12ef6a664c0c92780c4fddaee4578911c0d0ec9a32f6ffba7a24cca41237c1fdbc0d9c7336f60125eb84e136064ba43ee17ce4617f5a52";
+	
 	private final byte[] testBlock = {7,-99,-8,51,-62,3,-33,-78,58,79,19,-125,15,-20,46,24,5,97,44,-117,-59,-115,125,-100,59,-30,-72,102,76,-94,17,-99,102,58,-6,-92,6,-54,-128,-120,-57,120,
 			24,-19,-64,120,124,-1,60,-78,27,71,47,-70,46,21,-97,-94,-70,-8,35,29,-2,-95,124,86,21,-101,0,4,125,-26,109,-46,-47,123,115,-68,61,-126,-33,-120,-84,-10,-115,-119,-16,58,-79,-68,
 			69,6,124,-96,-17,87,5,-31,-6,11,-40,-29,-19,17,14,88,-81,-65,-30,127,99,55,-118,-55,28,17,-72,-7,62,-128,-45,-114,-8,79,-57,12,27,101,-72,16,-62,114,101,-25,112,-94,19,-111,-10,
@@ -32,13 +38,70 @@ public class HashBuilderTest {
 	
 	@Test
 	public void testEqualBlocks() {
-		Assert.assertEquals("Error, equals hash expected", hash, (new HashBuilder(testBlock)).build()); ;
+		Assert.assertEquals("Error, equals hash expected", hash_SKEIN512, (new HashBuilder(testBlock)).build()); ;
 	}
 	
 	@Test
 	public void testDifferentBlocks() {
 		byte[] differentBlock = testBlock.clone();
 		differentBlock[differentBlock.length/2] = (byte) (differentBlock[differentBlock.length/2]+1);
-		Assert.assertFalse("Error, different hash expected", hash.equals((new HashBuilder(differentBlock)).build()));
+		Assert.assertFalse("Error, different hash expected", hash_SKEIN512.equals((new HashBuilder(differentBlock)).build()));
 	}
+	
+	/*@Test
+	public void testFiles() throws HashBuilderException {
+		String hash1 = (new FileHashBuilder("D://Dev//Workspace//test//test.mkv")).build();
+		String hash2 = (new FileHashBuilder("D://Dev//Workspace//test//test.mkv")).build();
+		System.out.println("testFiles");
+		System.out.println(hash1);
+		System.out.println(hash2);
+		Assert.assertEquals(hash1, hash2);
+	}
+	
+	@Test
+	public void testFilesErr() throws HashBuilderException {
+		String hash1 = (new FileHashBuilder("D://Dev//Workspace//test//test.mkv")).build();
+		String hash2 = (new FileHashBuilder("D://Dev//Workspace//test//test.mkv")).buildErr();
+		System.out.println("testFilesErr");
+		System.out.println(hash1);
+		System.out.println(hash2);
+		Assert.assertFalse(hash1.equals(hash2));
+	}
+	*/
+	
+	/*@Test
+	public void testFiles2() throws HashBuilderException {
+		String hash1 = (new FileHashBuilder("D://Dev//Workspace//test//test.mkv")).build();
+		String hash2 = (new FileHashBuilder("D://Dev//Workspace//test//out//test.mkv")).build();
+		System.out.println("testFiles2");
+		System.out.println(hash1);
+		System.out.println(hash2);
+		Assert.assertEquals(hash1, hash2);
+	}*/
+	
+	/*@Test
+	public void testHashPerfs() throws HashBuilderException {
+		Stats stats=new Stats();
+		StatInfo statsFileHashBuilder = stats.getNewCounter("FileHashBuilder");
+		
+		System.out.println("MonoThreaded hash computing...");
+		statsFileHashBuilder.start();
+		System.out.println((new FileHashBuilder("D://Dev//Workspace//test//test.mkv")).buildSingleThread());
+		statsFileHashBuilder.end();
+		System.out.println("MonoThreaded computation time " + statsFileHashBuilder.getStatTime()/1000L);
+		
+		System.out.println("MultiThreaded hash computing...");
+		statsFileHashBuilder.start();
+		System.out.println((new FileHashBuilder("D://Dev//Workspace//test//test.mkv")).build());
+		statsFileHashBuilder.end();
+		System.out.println("MultiThreaded computation time " + statsFileHashBuilder.getStatTime()/1000L);
+
+	}*/
+	
+	/*@Test
+	public void compareFiles() throws HashBuilderException {
+		(new FileComparator("D://Dev//Workspace//test//test.mkv",
+							"D://Dev//Workspace//test//out//test.mkv",
+							1024*100)).compare();
+	}*/
 }
