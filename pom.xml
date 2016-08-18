@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>p2pRes</groupId>
     <artifactId>p2pRes</artifactId>
-    <version>1.0</version>
+    <version>1.0-SNAPSHOT</version>
 	  
 	<packaging>pom</packaging>
 	<!--<packaging>jar</packaging>
@@ -23,6 +23,15 @@
 			<id>central</id>
 			<name>Central Repository</name>
 			<url>http://repo.maven.apache.org/maven2</url>
+			<layout>default</layout>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>mvnrepository</id>
+			<name>mvnrepository</name>
+			<url>https://mvnrepository.com</url>
 			<layout>default</layout>
 			<snapshots>
 				<enabled>false</enabled>
