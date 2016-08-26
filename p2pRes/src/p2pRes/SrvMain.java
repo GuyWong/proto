@@ -3,8 +3,9 @@ package p2pRes;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import p2pRes.common.StaticsValues;
 import p2pRes.log.Logger;
-import p2pRes.server.Server;
+import p2pRes.net.server.Server;
 
 public class SrvMain {
 	
@@ -12,9 +13,9 @@ public class SrvMain {
 		Logger.info("SrvMain...");
 		
 		ExecutorService thread = Executors.newSingleThreadExecutor();
-		String path = "D://Dev//Workspace//test//";
-		thread.execute(new Server(6667, /*to be asked in protocol*/path));
-		Logger.info(" Running into " + path);
+		thread.execute(new Server(6667, StaticsValues.HARD_CODED_SHAREDPATH, StaticsValues.HARD_CODED_SRVOUTPATH));
+		Logger.info(" Running into " + StaticsValues.HARD_CODED_SHAREDPATH);
+		Logger.info(" Out path " + StaticsValues.HARD_CODED_SRVOUTPATH);
 		while (!thread.isTerminated()) {
 			try {
 				Thread.sleep(1000);

@@ -1,17 +1,24 @@
 package p2pRes;
 
 import java.util.concurrent.Executors;
-import p2pRes.client.Client;
-import p2pRes.client.ClientException;
+import org.apache.pivot.wtk.DesktopApplicationContext;
+
 import p2pRes.log.Logger;
-import p2pRes.server.Server;
+import p2pRes.net.client.Client;
+import p2pRes.net.client.ClientException;
+import p2pRes.net.server.Server;
+import p2pRes.ui.UIMain;
 
 public class SayHi {
 
 	public static void main(String[] args) {
-		Logger.info("Hi!");
+		DesktopApplicationContext.main(UIMain.class, args);
+		
+		//DesktopApplicationContext.
+		
+		/*Logger.info("Hi!");
 
-		Executors.newSingleThreadExecutor().execute(new Server(6667, /*to be asked in protocol*/"D://Dev//Workspace//test//")); 
+		Executors.newSingleThreadExecutor().execute(new Server(6667, /*to be asked in protocol*//*"D://Dev//Workspace//test//")); 
 		
 		try {
 			//(new Client("127.0.0.1", 6667)).getFile("C://Dev//workspace//test//out//", "test1.txt");
@@ -23,6 +30,6 @@ public class SayHi {
 		}
 		finally {
 			Logger.info("this is the end...");
-		}
+		}*/
 	}
 }
