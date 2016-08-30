@@ -25,22 +25,22 @@ public class BlockProcessorReceiver implements BlockProcessorVisitor {
 	}
 
 	public void process(int blockNumber) throws BlockProcessorException {
+		Block block;
 		try {
-			Block block = this.getBlockFromPeer(blockNumber, peer);
+			block = this.getBlockFromPeer(blockNumber, peer);
 			if (block == null) {
-				throw new ClientException("Invalid block received, block number: " + blockNumber);
-			}
-			
-			long fileOffset = blocksDescriptor.getPosition(blockNumber);
-			try {
-				this.writer.write(fileOffset, block.getValue());
-			} catch (WriterException e) {
-				throw new BlockProcessorException("Writing of block at position " + fileOffset + " failed", e);
+				throw new BlockProcessorException("Invalid block received, block number: " + blockNumber);
 			}
 		} catch (ClientException e) {
-			e.printStackTrace();//TODO:handle exception
+			throw new BlockProcessorException("Can't receive block " + blockNumber + " from peer", e);
 		}
 
+		long fileOffset = blocksDescriptor.getPosition(blockNumber);
+		try {
+			this.writer.write(fileOffset, block.getValue());
+		} catch (WriterException e) {
+			throw new BlockProcessorException("Writing of block at position " + fileOffset + " failed", e);
+		}
 	}
 
 	private Block getBlockFromPeer(int blockNumber, ClientProtocol peer) throws ClientException {

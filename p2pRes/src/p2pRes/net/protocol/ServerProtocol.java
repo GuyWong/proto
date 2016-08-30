@@ -31,6 +31,9 @@ public class ServerProtocol extends Protocol {
 		else if (Protocol.PUSH_BLOCK == clientCommand) {
 			int blockNumber = this.readInt();
 			Block block = (Block)this.readObject();
+			if (!block.checkHash()) {
+				throw new ProtocolException("Error checking hash of block " + blockNumber);
+			}
 			
 			return new PushBlock(blockNumber, block);
 		}

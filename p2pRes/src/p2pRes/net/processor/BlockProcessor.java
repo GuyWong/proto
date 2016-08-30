@@ -4,9 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 import p2pRes.model.BlocksDescriptor;
 
-/**
- * Thread safe object
- */
 public class BlockProcessor { 
 	public final static int NO_MORE_BLOCK_AVAILABLE = -1;
 	
@@ -32,22 +29,27 @@ public class BlockProcessor {
 		return NO_MORE_BLOCK_AVAILABLE;
 	}
 	
+	private synchronized void finalizeBlockNumber(int blockNumber) {
+		this.writedBlocksSet.add(blockNumber);
+	}
+	
 	private synchronized void unassignBlockNumber(int blockNumber) {
 		this.assignedBlocksSet.remove(blockNumber);
 	}
 
 	/**
 	 * Process a new block
+	 * Warning, visitor processing not thread safe ! (has to be for perfs)
 	 * @param BlockProcessor - Implementation, how to process the block
 	 * @throws BlockProcessorException
 	 */
-	public synchronized void processBlock(BlockProcessorVisitor visitor) throws BlockProcessorException {
+	public void processBlock(BlockProcessorVisitor visitor) throws BlockProcessorException {
 		int blockNumber = this.assignNewEmptyBlockNumber();
 		if (blockNumber == NO_MORE_BLOCK_AVAILABLE) { return; }
 		
 		try {
 			visitor.process(blockNumber);
-			this.writedBlocksSet.add(blockNumber);
+			this.finalizeBlockNumber(blockNumber);
 		} catch (BlockProcessorException e) {
 			unassignBlockNumber(blockNumber);
 			throw new BlockProcessorException("Processing of block " + blockNumber + " failed", e);

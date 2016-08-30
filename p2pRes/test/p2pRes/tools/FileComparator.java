@@ -31,6 +31,9 @@ public class FileComparator {
 				if (!hash1.equals(hash2)) {
 					Logger.info("Blk" + i + " KO " + hash1 + " " + hash2);
 				}
+				else {
+					//Logger.info("Blk" + i + " OK " + hash1 + " " + hash2);
+				}
 			}
 		} catch (ReaderException e) {
 			Logger.error(e.getMessage());

@@ -10,12 +10,15 @@ import p2pRes.log.Logger;
 import p2pRes.model.FileDescriptor;
 import p2pRes.model.FileException;
 import p2pRes.model.TransferableFile;
+import p2pRes.net.processor.BlockProcessor;
 import p2pRes.net.protocol.ProtocolException;
 import p2pRes.net.protocol.ServerProtocol;
 import p2pRes.net.protocol.response.AskForFileDefinition;
 import p2pRes.net.protocol.response.ProtocolResponse;
 import p2pRes.net.protocol.response.ReceiveFileDefinition;
 import p2pRes.stats.StatInfo;
+import p2pRes.utils.FileHashBuilder;
+import p2pRes.utils.HashBuilderException;
 
 public class MainClientConnection extends ClientConnection {
 	private ExecutorService childConnectionsPool;
@@ -66,12 +69,20 @@ public class MainClientConnection extends ClientConnection {
 					serverProtocol.sendPortNumber(portNumber);
 					Logger.info("MainClientConnection - port number sent - port " + portNumber);  
 					
-					FileDescriptor fileDescriptor = ((ReceiveFileDefinition)response).getFileDescriptor();
+					final FileDescriptor fileDescriptor = ((ReceiveFileDefinition)response).getFileDescriptor();
+					final BlockProcessor blockProcessor = new BlockProcessor(fileDescriptor.getBlocksDescriptor());
+					final String outFilePath = outRep + "//" + fileDescriptor.getFileName();
 					this.childConnectionsPool.execute(new ReceiverClientConnection(this.getServerInstance(), 
 																					server.accept(), 
 																					fileDescriptor.getBlocksDescriptor(),
-																					outRep + "//" + fileDescriptor.getFileName(),
+																					blockProcessor,
+																					outFilePath,
 																					maxClientConnections)); //TODO: mutualize new connection opening
+					Executors.newSingleThreadExecutor().execute(new Runnable() {			
+						public void run() {
+							monitorReceivedFile(blockProcessor, outFilePath, fileDescriptor);
+						}
+					});
 				}
 				if (ProtocolResponse.Command.ASK_NEWCONNECTION == response.getCommand()) {
 					int portNumber = this.getServerInstance().bindNewPort();
@@ -95,4 +106,25 @@ public class MainClientConnection extends ClientConnection {
 			e.printStackTrace();//TODO: everything is fatal for now, handle a more subtle return status
 		}
 	}
+	
+	private void monitorReceivedFile(BlockProcessor blockProcessor, 
+										String receivedFilePath, 
+										FileDescriptor fileDescriptor) { //TODO: implement as a handler
+		while (!blockProcessor.isComplete()) {
+        	try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {Logger.debug(e.getMessage());}
+		}	
+		
+		try {
+			if ( fileDescriptor.getFileHash().equals((new FileHashBuilder(receivedFilePath)).build())) {
+				Logger.info("File hash check is fine !" + receivedFilePath); //TODO
+				return;
+			}
+		} catch (HashBuilderException e) {
+			e.printStackTrace();//TODO: handle properly exception
+		}
+		Logger.error("ERROR ! file hash not equals !!" + receivedFilePath); //TODO
+	}
+
 }

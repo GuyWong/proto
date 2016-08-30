@@ -6,27 +6,55 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * Synchronized upon file
+ * */
 public class FileWriter {
+	private static Map<String, Object> locks = new HashMap<String, Object>();
+	
+	private final String filePath;
+	
 	private SeekableByteChannel fileChannel;
 	
 	public FileWriter(String path) throws WriterException {
+		this.filePath = path;
+		this.fileChannel = initChannel(path); 
+
+	}
+	
+	private synchronized SeekableByteChannel initChannel(String path) throws WriterException {
 		try {
-			this.fileChannel = Files.newByteChannel(Paths.get(path), 
-					StandardOpenOption.CREATE, 
-					StandardOpenOption.TRUNCATE_EXISTING, 
-					StandardOpenOption.WRITE);
+			if (!locks.containsKey(path)) {
+				SeekableByteChannel channel =  Files.newByteChannel(Paths.get(path), 
+																	StandardOpenOption.CREATE, 
+																	StandardOpenOption.TRUNCATE_EXISTING, 
+																	StandardOpenOption.WRITE);
+				locks.put(path, new Object());
+				return channel;
+			}	
+			else {
+				return Files.newByteChannel(Paths.get(path), StandardOpenOption.WRITE);
+			}
 		} catch (IOException e) {
 			throw new WriterException("Can't open file " + path, e);
 		}
 	}
 	
-	public synchronized void write(long position, byte[] data) throws WriterException {
+	public void write(long position, byte[] data) throws WriterException {
 		try {
-			this.fileChannel.position(position);
-			this.fileChannel.write(ByteBuffer.wrap(data));
+			synchronized (locks.get(filePath)) {
+				this.fileChannel.position(position);
+				this.fileChannel.write(ByteBuffer.wrap(data));
+			}
 		} catch (IOException e) {
 			throw new WriterException("Can't write data on file", e);
 		}
+	}
+	
+	public synchronized void close() {
+		locks.remove(filePath);
 	}
 }

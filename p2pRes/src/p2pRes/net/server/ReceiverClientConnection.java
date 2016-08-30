@@ -11,6 +11,9 @@ import p2pRes.io.WriterException;
 import p2pRes.log.Logger;
 import p2pRes.model.Block;
 import p2pRes.model.BlocksDescriptor;
+import p2pRes.net.processor.BlockProcessor;
+import p2pRes.net.processor.BlockProcessorException;
+import p2pRes.net.processor.BlockProcessorVisitor;
 import p2pRes.net.protocol.ProtocolException;
 import p2pRes.net.protocol.ServerProtocol;
 import p2pRes.net.protocol.response.ProtocolResponse;
@@ -20,16 +23,23 @@ public class ReceiverClientConnection extends ClientConnection {
 	private final BlocksDescriptor blockDescriptor;
 	private final String destinationFilePath;
 	private final int maxClientConnections;
+	private BlockProcessor blockProcessor;
+	private BlockProcessorVisitor bpv;
 	private ExecutorService childConnectionsPool;
 	private FileWriter writer;
 	
 	public ReceiverClientConnection(Server serverInstance, 
 									Socket clientSocket, 
 									BlocksDescriptor blockDescriptor,
+									BlockProcessor blockProcessor,
 									String destinationFilePath,
 									int maxClientConnections) throws ServerException {
 		super(serverInstance, clientSocket);
 		this.blockDescriptor = blockDescriptor;
+		this.blockProcessor = blockProcessor;
+		this.bpv = new BlockProcessorVisitor() {
+			public void process(int blockNumber) throws BlockProcessorException {/*Do nothing, only count processed blocks*/}
+		};
 		this.destinationFilePath = destinationFilePath;
 		this.maxClientConnections = maxClientConnections;
 		this.childConnectionsPool = Executors.newFixedThreadPool(maxClientConnections);
@@ -49,6 +59,11 @@ public class ReceiverClientConnection extends ClientConnection {
 				ProtocolResponse response = serverProtocol.handleInstruction();
 				if (ProtocolResponse.Command.PUSH_BLOCK == response.getCommand()) {
 					this.writeBlock(((PushBlock)response).getBlockNumber(), ((PushBlock)response).getBlock());
+					try {
+						this.blockProcessor.processBlock(bpv);
+					} catch (BlockProcessorException e) {
+						throw new ServerException("Error processing block " + ((PushBlock)response).getBlockNumber(), e);
+					}
 				}
 				if (ProtocolResponse.Command.ASK_NEWCONNECTION == response.getCommand()) {
 					int portNumber = this.getServerInstance().bindNewPort();
@@ -57,16 +72,12 @@ public class ReceiverClientConnection extends ClientConnection {
 					serverProtocol.sendPortNumber(portNumber);
 					Logger.info("MainClientConnection - port number sent - port " + portNumber);  
 					
-					ReceiverClientConnection connection = new ReceiverClientConnection(this.getServerInstance(), 
-																						server.accept(),
-																						blockDescriptor,
-																						destinationFilePath,
-																						maxClientConnections);
-					this.childConnectionsPool.execute(connection);
-					/*this.childConnectionsPool.execute(new ReceiverClientConnection(this.getServerInstance(), 
+					this.childConnectionsPool.execute(new ReceiverClientConnection(this.getServerInstance(), 
 																					server.accept(),
 																					blockDescriptor,
-																					destinationFilePath));*/
+																					blockProcessor,
+																					destinationFilePath,
+																					maxClientConnections));
 				}
 				if (ProtocolResponse.Command.ASK_ENDCONNECTION == response.getCommand()) {
 					Logger.info("Ending server connection...");
@@ -84,7 +95,7 @@ public class ReceiverClientConnection extends ClientConnection {
 		}
 	}
 	
-	private synchronized void writeBlock(int blockNumber, Block block)  throws ServerException {
+	private void writeBlock(int blockNumber, Block block)  throws ServerException {
 		long fileOffset = blockDescriptor.getPosition(blockNumber);
 		try {
 			this.writer.write(fileOffset, block.getValue());
