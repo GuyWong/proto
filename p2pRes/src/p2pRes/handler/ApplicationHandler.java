@@ -1,8 +1,7 @@
 package p2pRes.handler;
 
 import java.util.concurrent.Executors;
-
-import p2pRes.common.StaticsValues;
+import p2pRes.conf.Config;
 import p2pRes.handler.model.Command;
 import p2pRes.net.client.Client;
 import p2pRes.net.client.ClientException;
@@ -16,7 +15,7 @@ public class ApplicationHandler {
 	private static ApplicationHandler instance = null;
 	
 	private CommandHandler commandHandler = new CommandHandler();
-	//private UIMain uiMain;
+	private ConfigurationHandler configurationHandler = new ConfigurationHandler();
 
 	public static synchronized ApplicationHandler getInstance() {
 		if (instance==null) {
@@ -25,10 +24,10 @@ public class ApplicationHandler {
 		return instance;
 	}
 	
-	private ApplicationHandler() {
-		Executors.newSingleThreadExecutor().execute(new Server(StaticsValues.HARD_CODED_PORT, 
-																StaticsValues.HARD_CODED_SHAREDPATH,
-																StaticsValues.HARD_CODED_SRVOUTPATH));
+	private ApplicationHandler() {		
+		Executors.newSingleThreadExecutor().execute(new Server(configurationHandler.getConfig().getApplicationPort(), 
+																configurationHandler.getConfig().getSharedRepository(), 
+																configurationHandler.getConfig().getOutPath()));
 		
 		Executors.newSingleThreadExecutor().execute(new Runnable() { //FIXME; Implements a producer/consumer instead
 			public void run() {
@@ -36,8 +35,7 @@ public class ApplicationHandler {
 					while (true) {
 						if (commandHandler.hasWaitingCommand()) {
 							handleCommand(commandHandler.popOutFileTransferCmd());
-						}
-					
+						}	
 					}
 				} 
 				catch (Exception e) {  } 
@@ -47,7 +45,8 @@ public class ApplicationHandler {
 	
 	private void handleCommand(Command command) { //do it in the command handler
 		try {
-			(new Client(StaticsValues.HARD_CODED_URL, StaticsValues.HARD_CODED_PORT)).sendFile(command.getFilePath());
+			(new Client(configurationHandler.getConfig().getClientUrl(), 
+						configurationHandler.getConfig().getClientPort())).sendFile(command.getFilePath());
 		} catch (ClientException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -56,11 +55,15 @@ public class ApplicationHandler {
 	
 	
 	public void register(UIMain uiMain) {
-		//this.uiMain = uiMain;
 		uiMain.register(commandHandler);
+		uiMain.register(configurationHandler);
 	}
 	
 	public CommandHandler getCommandHandler() {
 		return commandHandler;
+	}
+	
+	public Config getConfig() {
+		return configurationHandler.getConfig();
 	}
 }

@@ -3,7 +3,6 @@ package p2pRes.ui;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-
 import org.apache.pivot.collections.Map;
 import org.apache.pivot.io.FileList;
 import org.apache.pivot.wtk.Application;
@@ -14,26 +13,28 @@ import org.apache.pivot.wtk.DropTarget;
 import org.apache.pivot.wtk.ImageView;
 import org.apache.pivot.wtk.Manifest;
 import org.apache.pivot.wtk.Window;
-
 import p2pRes.handler.CommandHandler;
-import p2pRes.common.StaticsValues;
+import p2pRes.handler.ConfigurationHandler;
 import p2pRes.handler.ApplicationHandler;
 import p2pRes.handler.model.Command;
 
 public class UIMain implements Application  {
-	
 	private CommandHandler commandHandler = null;
+	private ConfigurationHandler configurationHandler = null;
 	
 	private Window window = new Window();
 	private ImageView image = new ImageView();
 	
 	public void startup(Display display, Map<String, String> properties) throws Exception {
 		ApplicationHandler.getInstance().register(this);
-		commandHandler = ApplicationHandler.getInstance().getCommandHandler();
-		
+
 		if (commandHandler==null) {
 			throw new UIException("Command handler not registered");
 		}
+		if (configurationHandler==null) {
+			throw new UIException("Configuration handler not registered");
+		}
+		
 		
 		image.setImage("/p2pRes/ui/vortex.jpg");
 		
@@ -73,8 +74,8 @@ public class UIMain implements Application  {
 						FileList fileList = dragContent.getFileList();
 						
 						for	(Iterator<File> it = fileList.iterator(); it.hasNext(); ) {
-							commandHandler.pushInFileTransferCmd(new Command(StaticsValues.HARD_CODED_URL, 
-																				StaticsValues.HARD_CODED_PORT, 
+							commandHandler.pushInFileTransferCmd(new Command(ApplicationHandler.getInstance().getConfig().getClientUrl(), 
+																				ApplicationHandler.getInstance().getConfig().getClientPort(), 
 																				it.next().getAbsolutePath()));
 						}
 						
@@ -113,5 +114,8 @@ public class UIMain implements Application  {
 	public void register(CommandHandler commandHandler) {
 		this.commandHandler = commandHandler;
 	}
-
+	
+	public void register(ConfigurationHandler configurationHandler) {
+		this.configurationHandler = configurationHandler;
+	}
 }
