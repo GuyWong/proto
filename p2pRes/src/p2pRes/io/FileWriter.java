@@ -21,11 +21,15 @@ public class FileWriter {
 	
 	public FileWriter(String path) throws WriterException {
 		this.filePath = path;
-		this.fileChannel = initChannel(path); 
-
+		this.fileChannel = initChannel(path, false); 
 	}
 	
-	private synchronized SeekableByteChannel initChannel(String path) throws WriterException {
+	public FileWriter(String path, boolean truncate) throws WriterException {
+		this.filePath = path;
+		this.fileChannel = initChannel(path, truncate); 
+	}
+	
+	private synchronized SeekableByteChannel initChannel(String path, boolean truncate) throws WriterException {
 		try {
 			if (!locks.containsKey(path)) {
 				SeekableByteChannel channel =  Files.newByteChannel(Paths.get(path), 
@@ -36,6 +40,9 @@ public class FileWriter {
 				return channel;
 			}	
 			else {
+				if (truncate==true) {
+					return Files.newByteChannel(Paths.get(path), StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+				}
 				return Files.newByteChannel(Paths.get(path), StandardOpenOption.WRITE);
 			}
 		} catch (IOException e) {

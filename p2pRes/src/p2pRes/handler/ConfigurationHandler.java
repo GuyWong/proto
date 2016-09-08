@@ -28,6 +28,10 @@ public class ConfigurationHandler {
 		return config;
 	}
 	
+	public void updateConfig() {
+		writeConfig(FILECONFIGURATION_NAME, config);
+	}
+	
 	private Config loadConfig(String path) {
 		try {
 			FileReader reader = new FileReader(path);
@@ -49,7 +53,7 @@ public class ConfigurationHandler {
 		String serializedConf = gson.toJson(config);
 		
 		try {
-			FileWriter writer = new FileWriter(path);
+			FileWriter writer = new FileWriter(path, true);
 			writer.write(0, serializedConf.getBytes());		
 		} catch (WriterException e) {
 			// TODO Auto-generated catch block
@@ -60,10 +64,10 @@ public class ConfigurationHandler {
 	private Config createDefault() {
 		Config config = new Config(); //TODO
 		config.setApplicationPort(6667);
-		config.setClientUrl("192.168.0.8");
+		config.setClientUrl("127.0.0.1");
 		config.setClientPort(6667);
-		config.setSharedRepository("C://Utils//dev//test//");
-		config.setOutPath("C://Utils//dev//test////srvout//");
+		config.setSharedRepository("./");
+		config.setOutPath("./");
 		return config;
 	}
 }

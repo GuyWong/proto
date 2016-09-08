@@ -7,6 +7,7 @@ import p2pRes.net.client.Client;
 import p2pRes.net.client.ClientException;
 import p2pRes.net.server.Server;
 import p2pRes.ui.UIMain;
+import p2pRes.ui.UIRunner;
 
 /**
  * Singleton
@@ -54,9 +55,9 @@ public class ApplicationHandler {
 	}
 	
 	
-	public void register(UIMain uiMain) {
-		uiMain.register(commandHandler);
-		uiMain.register(configurationHandler);
+	public void register(UIRunner uiRunner) {
+		uiRunner.register(commandHandler);
+		uiRunner.register(configurationHandler);
 	}
 	
 	public CommandHandler getCommandHandler() {

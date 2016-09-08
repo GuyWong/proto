@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:UIMain title="ProtoUI" maximized="true"
+	xmlns:bxml="http://pivot.apache.org/bxml"
+	xmlns:ui="p2pRes.ui"
+	xmlns="org.apache.pivot.wtk">
+	
+	<BoxPane orientation="vertical">
+		<BoxPane styles="{padding:4, verticalAlignment:'center'}">	
+			<Label text="Shared repository"/>
+			<TextArea bxml:id="sharedRepoText"/>
+		</BoxPane>
+		
+		<BoxPane styles="{padding:4, verticalAlignment:'center'}">	
+			<Label text="Received files destination"/>
+			<TextArea bxml:id="outPathText"/>
+		</BoxPane>
+		
+		<BoxPane styles="{padding:4, verticalAlignment:'center'}">	
+			<Label text="Application port"/>
+			<TextArea bxml:id="appPortText"/>
+		</BoxPane>
+		
+		<BoxPane styles="{padding:4, verticalAlignment:'center'}">	
+			<Label text="Client URL"/>
+			<TextArea bxml:id="clientUrlText"/>
+			<Label text="Client Port"/>
+			<TextArea bxml:id="clientPortText"/>
+		</BoxPane>
+		
+		<BoxPane styles="{padding:4, verticalAlignment:'center'}">
+			<ImageView bxml:id="teleportVortexImage" image="/p2pRes/ui/vortex.jpg"/>
+			<!--<Label text="Drop files in the vortex"/>-->
+		</BoxPane>
+	</BoxPane>
+</ui:UIMain>
