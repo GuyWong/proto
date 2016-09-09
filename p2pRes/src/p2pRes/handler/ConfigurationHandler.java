@@ -14,24 +14,33 @@ public class ConfigurationHandler {
 	
 	private Config config;
 	
-	public ConfigurationHandler() {
+	public ConfigurationHandler(ErrorHandler errorHandler) {
 		if (!(new File(FILECONFIGURATION_NAME)).exists()) {
 			config = createDefault();
-			writeConfig(FILECONFIGURATION_NAME, config);
+			try {
+				writeConfig(FILECONFIGURATION_NAME, config);
+			} catch (HandlerException e) {
+				errorHandler.addError(new HandlerException("Error initializing config file", e));
+			}
 		}
 		else {
-			config = loadConfig(FILECONFIGURATION_NAME);
+			try {
+				config = loadConfig(FILECONFIGURATION_NAME);
+			} catch (HandlerException e) {
+				config = createDefault();
+				errorHandler.addError(new HandlerException("Can't load the configuration file, setting default Value", e));
+			}
 		}
 	}
 
 	public String getConfigValue(Config.ELEMENT_NAME elementName) { return config.getValue(elementName); }
 	
-	public void updateElement(Config.ELEMENT_NAME elementName, String value) {
+	public void updateElement(Config.ELEMENT_NAME elementName, String value) throws HandlerException {
 		this.config.setValue(elementName, value);
 		this.writeConfig(FILECONFIGURATION_NAME, config);
 	}
 	
-	private Config loadConfig(String path) {
+	private Config loadConfig(String path) throws HandlerException {
 		try {
 			FileReader reader = new FileReader(path);
 			String read = new String(reader.read(0, (int)reader.getFileSize()));
@@ -39,13 +48,11 @@ public class ConfigurationHandler {
 			Gson gson = new GsonBuilder().create();
 			return gson.fromJson(read, Config.class);		
 		} catch (ReaderException e) {
-			e.printStackTrace();// TODO Auto-generated catch block
-		}
-		return null;
-		
+			throw new HandlerException("Error reading config file " + path, e);
+		}		
 	}
 	
-	private void writeConfig(String path, Config config) {
+	private void writeConfig(String path, Config config) throws HandlerException {
 		Gson gson = new GsonBuilder().create();
 		String serializedConf = gson.toJson(config);
 		
@@ -53,7 +60,7 @@ public class ConfigurationHandler {
 			FileWriter writer = new FileWriter(path, true);
 			writer.write(0, serializedConf.getBytes());		
 		} catch (WriterException e) {
-			e.printStackTrace();// TODO Auto-generated catch block
+			throw new HandlerException("Error writing config file " + path, e);
 		}
 	}
 	

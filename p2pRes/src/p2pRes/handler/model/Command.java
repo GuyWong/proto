@@ -22,4 +22,8 @@ public class Command {
 	public String getFilePath() {
 		return filePath;
 	}
+	
+	public String toString() {
+		return "CmdCopy[" + filePath + "]@" + url + ":" + port;
+	}
 }

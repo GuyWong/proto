@@ -7,6 +7,7 @@ import p2pRes.handler.model.Command;
 import p2pRes.net.client.Client;
 import p2pRes.net.client.ClientException;
 import p2pRes.net.server.Server;
+import p2pRes.ui.UIException;
 
 /**
  * Singleton
@@ -14,8 +15,10 @@ import p2pRes.net.server.Server;
 public class ApplicationHandler {
 	private static ApplicationHandler instance = null;
 	
+	private ErrorHandler errorHandler = new ErrorHandler();
 	private CommandHandler commandHandler = new CommandHandler();
-	private ConfigurationHandler configurationHandler = new ConfigurationHandler();
+	private ConfigurationHandler configurationHandler = new ConfigurationHandler(errorHandler);
+	
 	
 	private ExecutorService serverService = null;
 	private ExecutorService commandService = null;
@@ -48,9 +51,10 @@ public class ApplicationHandler {
 							if (commandHandler.hasWaitingCommand()) {
 								handleCommand(commandHandler.popOutFileTransferCmd());
 							}	
+							Thread.sleep(100);
 						}
 					} 
-					catch (Exception e) {  } 
+					catch (Exception e) { errorHandler.addError(e); } 
 				}
 			});	
 		}	
@@ -63,13 +67,13 @@ public class ApplicationHandler {
 		commandService = null;
 	}
 	
-	private void handleCommand(Command command) { //do it in the command handler
+	private void handleCommand(Command command) throws UIException { //do it in the command handler
 		try {
 			(new Client(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_URL), 
 						Integer.parseInt(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_PORT))))
 					.sendFile(command.getFilePath());
 		} catch (ClientException e) {
-			e.printStackTrace();// TODO Auto-generated catch block
+			throw new UIException("Error sendig command " + command, e);
 		}
 	}
 	
@@ -79,5 +83,9 @@ public class ApplicationHandler {
 	
 	public ConfigurationHandler getConfigurationHandler() {
 		return configurationHandler;
+	}
+	
+	public ErrorHandler getErrorHandler() {
+		return errorHandler;
 	}
 }

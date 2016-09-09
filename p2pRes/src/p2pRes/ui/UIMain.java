@@ -21,6 +21,8 @@ import org.apache.pivot.wtk.TextAreaContentListener;
 import org.apache.pivot.wtk.Window;
 import p2pRes.handler.CommandHandler;
 import p2pRes.handler.ConfigurationHandler;
+import p2pRes.handler.ErrorHandler;
+import p2pRes.handler.HandlerException;
 import p2pRes.conf.Config;
 import p2pRes.handler.ApplicationHandler;
 import p2pRes.handler.model.Command;
@@ -28,6 +30,7 @@ import p2pRes.handler.model.Command;
 public class UIMain extends Window implements Bindable {
 	private CommandHandler commandHandler = null;
 	private ConfigurationHandler configurationHandler = null;
+	private ErrorHandler errorHandler = null;
 	
 	@BXML private TextArea sharedRepoText;
 	@BXML private TextArea receivedFilePathText;
@@ -39,6 +42,7 @@ public class UIMain extends Window implements Bindable {
     public void initialize(Map<String, Object> namespace, URL location, Resources resources) {       
     	commandHandler = ApplicationHandler.getInstance().getCommandHandler();
     	configurationHandler = ApplicationHandler.getInstance().getConfigurationHandler();
+    	errorHandler = ApplicationHandler.getInstance().getErrorHandler();
     	
     	sharedRepoText.setText(configurationHandler.getConfigValue(Config.ELEMENT_NAME.SHARED_REPOSITORY));
         sharedRepoText.getTextAreaContentListeners().add(new ConfigTextAreaContentListener(Config.ELEMENT_NAME.SHARED_REPOSITORY));
@@ -67,11 +71,15 @@ public class UIMain extends Window implements Bindable {
 		public void paragraphsRemoved(TextArea textArea, int index, Sequence<Paragraph> removed) {}
 
 		public void textChanged(TextArea textArea) {
-			configurationHandler.updateElement(elementName, textArea.getText());
+			try {
+				configurationHandler.updateElement(elementName, textArea.getText());
+			} catch (HandlerException e) {
+				errorHandler.addError(new UIException("Can't save new configuration values", e));
+			}
 		}
     }
     
-	private class TeleportDropTarget implements DropTarget {
+	private class TeleportDropTarget implements DropTarget {			
         public DropAction dragEnter(Component component, Manifest dragContent,
                 int supportedDropActions, DropAction userDropAction) {
                 DropAction dropAction = null;
@@ -99,16 +107,18 @@ public class UIMain extends Window implements Bindable {
             public DropAction drop(Component component, Manifest dragContent,
             						int supportedDropActions, int x, int y, DropAction userDropAction) {
             if (dragContent.containsFileList()) {
+            	FileList fileList;
             	try {
-					FileList fileList = dragContent.getFileList();
-					
-					for	(Iterator<File> it = fileList.iterator(); it.hasNext(); ) {
-						commandHandler.pushInFileTransferCmd(new Command(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_URL), 
-																			Integer.parseInt(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_PORT)), 
-																			it.next().getAbsolutePath()));
-					}
+					fileList = dragContent.getFileList();
 				} catch (IOException e) {
-					e.printStackTrace();// TODO Auto-generated catch block
+					errorHandler.addError(new UIException("Error getting dragged file list", e));
+					return null;
+				}
+            	
+				for	(Iterator<File> it = fileList.iterator(); it.hasNext(); ) {
+					commandHandler.pushInFileTransferCmd(new Command(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_URL), 
+																		Integer.parseInt(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_PORT)), 
+																		it.next().getAbsolutePath()));
 				}
             }
             

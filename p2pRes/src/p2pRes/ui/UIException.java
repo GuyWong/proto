@@ -8,4 +8,8 @@ public class UIException extends BaseException {
 	public UIException(String err) {
 		super(err);
 	}
+	
+	public UIException(String err, Exception e) {
+		super(err, e);
+	}
 }
