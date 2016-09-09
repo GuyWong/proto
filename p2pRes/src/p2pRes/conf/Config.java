@@ -1,49 +1,18 @@
 package p2pRes.conf;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Config {
-	private int applicationPort;
-	private String clientUrl;
-	private int clientPort;
-	private String outPath;
-	private String sharedRepository;
+	public static enum ELEMENT_NAME {APPLICATION_PORT, CLIENT_URL, CLIENT_PORT, RECEIVED_FILEPATH, SHARED_REPOSITORY};
 	
-	public int getApplicationPort() {
-		return this.applicationPort;
+	private Map<ELEMENT_NAME, String> config = new HashMap<ELEMENT_NAME, String>();
+	
+	public String getValue(ELEMENT_NAME element) {
+		return config.get(element);
 	}
 	
-	public void setApplicationPort(int applicationPort) {
-		this.applicationPort = applicationPort;
-	}
-	
-	public String getClientUrl() {
-		return this.clientUrl;
-	}
-	
-	public void setClientUrl(String clientUrl) {
-		this.clientUrl = clientUrl;
-	}
-	
-	public int getClientPort() {
-		return clientPort;
-	}
-	
-	public void setClientPort(int clientPort) {
-		this.clientPort = clientPort;
-	}
-	
-	public String getOutPath() {
-		return outPath;
-	}
-	
-	public void setOutPath(String outPath) {
-		this.outPath = outPath;
-	}
-	
-	public String getSharedRepository() {
-		return sharedRepository;
-	}
-	
-	public void setSharedRepository(String sharedRepository) {
-		this.sharedRepository = sharedRepository;
+	public void setValue(ELEMENT_NAME element, String value) {
+		config.put(element, value);
 	}
 }

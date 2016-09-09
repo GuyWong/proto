@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
-
 import org.apache.pivot.beans.BXML;
 import org.apache.pivot.beans.Bindable;
 import org.apache.pivot.collections.Map;
@@ -22,6 +21,7 @@ import org.apache.pivot.wtk.TextAreaContentListener;
 import org.apache.pivot.wtk.Window;
 import p2pRes.handler.CommandHandler;
 import p2pRes.handler.ConfigurationHandler;
+import p2pRes.conf.Config;
 import p2pRes.handler.ApplicationHandler;
 import p2pRes.handler.model.Command;
 
@@ -30,66 +30,47 @@ public class UIMain extends Window implements Bindable {
 	private ConfigurationHandler configurationHandler = null;
 	
 	@BXML private TextArea sharedRepoText;
-	@BXML private TextArea outPathText;
+	@BXML private TextArea receivedFilePathText;
 	@BXML private TextArea appPortText;
 	@BXML private TextArea clientUrlText;
 	@BXML private TextArea clientPortText;
 	@BXML private ImageView teleportVortexImage;
 	
     public void initialize(Map<String, Object> namespace, URL location, Resources resources) {       
-        teleportVortexImage.setDropTarget(new TeleportDropTarget());
-	}
-    
-    public void register(UIRunner uiRunner) {
-    	this.configurationHandler = uiRunner.getConfigurationHandler();
-    	this.commandHandler = uiRunner.getCommandhandler();
+    	commandHandler = ApplicationHandler.getInstance().getCommandHandler();
+    	configurationHandler = ApplicationHandler.getInstance().getConfigurationHandler();
     	
-        sharedRepoText.setText(configurationHandler.getConfig().getSharedRepository());
-        sharedRepoText.getTextAreaContentListeners().add(new TextAreaContentListener() {
-			public void paragraphInserted(TextArea textArea, int index) {}
-			public void paragraphsRemoved(TextArea textArea, int index, Sequence<Paragraph> removed) {}
-			public void textChanged(TextArea textArea) {
-				configurationHandler.getConfig().setSharedRepository(textArea.getText());
-				configurationHandler.updateConfig();
-			}});
+    	sharedRepoText.setText(configurationHandler.getConfigValue(Config.ELEMENT_NAME.SHARED_REPOSITORY));
+        sharedRepoText.getTextAreaContentListeners().add(new ConfigTextAreaContentListener(Config.ELEMENT_NAME.SHARED_REPOSITORY));
         
-        outPathText.setText(configurationHandler.getConfig().getOutPath());
-        outPathText.getTextAreaContentListeners().add(new TextAreaContentListener() {
-			public void paragraphInserted(TextArea textArea, int index) {}
-			public void paragraphsRemoved(TextArea textArea, int index, Sequence<Paragraph> removed) {}
-			public void textChanged(TextArea textArea) {
-				configurationHandler.getConfig().setOutPath(textArea.getText());
-				configurationHandler.updateConfig();
-			}});
+        receivedFilePathText.setText(configurationHandler.getConfigValue(Config.ELEMENT_NAME.RECEIVED_FILEPATH));
+        receivedFilePathText.getTextAreaContentListeners().add(new ConfigTextAreaContentListener(Config.ELEMENT_NAME.RECEIVED_FILEPATH));
         
-        appPortText.setText(""+configurationHandler.getConfig().getApplicationPort());
-        appPortText.getTextAreaContentListeners().add(new TextAreaContentListener() {
-			public void paragraphInserted(TextArea textArea, int index) {}
-			public void paragraphsRemoved(TextArea textArea, int index, Sequence<Paragraph> removed) {}
-			public void textChanged(TextArea textArea) {
-				configurationHandler.getConfig().setApplicationPort(Integer.parseInt(textArea.getText()));
-				configurationHandler.updateConfig();
-			}});
+        appPortText.setText(""+configurationHandler.getConfigValue(Config.ELEMENT_NAME.APPLICATION_PORT));
+        appPortText.getTextAreaContentListeners().add(new ConfigTextAreaContentListener(Config.ELEMENT_NAME.APPLICATION_PORT));
         
-        clientUrlText.setText(configurationHandler.getConfig().getClientUrl());
-        clientUrlText.getTextAreaContentListeners().add(new TextAreaContentListener() {
-			public void paragraphInserted(TextArea textArea, int index) {}
-			public void paragraphsRemoved(TextArea textArea, int index, Sequence<Paragraph> removed) {}
-			public void textChanged(TextArea textArea) {
-				configurationHandler.getConfig().setClientUrl(textArea.getText());
-				configurationHandler.updateConfig();
-			}});
+        clientUrlText.setText(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_URL));
+        clientUrlText.getTextAreaContentListeners().add(new ConfigTextAreaContentListener(Config.ELEMENT_NAME.CLIENT_URL));
         
-        clientPortText.setText(""+configurationHandler.getConfig().getClientPort());
-        clientPortText.getTextAreaContentListeners().add(new TextAreaContentListener() {
-			public void paragraphInserted(TextArea textArea, int index) {}
-			public void paragraphsRemoved(TextArea textArea, int index, Sequence<Paragraph> removed) {}
-			public void textChanged(TextArea textArea) {
-				configurationHandler.getConfig().setClientPort(Integer.parseInt(textArea.getText()));
-				configurationHandler.updateConfig();
-			}});
-    }
+        clientPortText.setText(""+configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_PORT));
+        clientPortText.getTextAreaContentListeners().add(new ConfigTextAreaContentListener(Config.ELEMENT_NAME.CLIENT_PORT));
+    	
+    	teleportVortexImage.setDropTarget(new TeleportDropTarget());  
+	}
 	
+    private class ConfigTextAreaContentListener implements TextAreaContentListener {
+    	private Config.ELEMENT_NAME elementName;
+    	
+    	public ConfigTextAreaContentListener(Config.ELEMENT_NAME elementName) { this.elementName = elementName; }
+    	
+		public void paragraphInserted(TextArea textArea, int index) {}
+		public void paragraphsRemoved(TextArea textArea, int index, Sequence<Paragraph> removed) {}
+
+		public void textChanged(TextArea textArea) {
+			configurationHandler.updateElement(elementName, textArea.getText());
+		}
+    }
+    
 	private class TeleportDropTarget implements DropTarget {
         public DropAction dragEnter(Component component, Manifest dragContent,
                 int supportedDropActions, DropAction userDropAction) {
@@ -103,9 +84,7 @@ public class UIMain extends Window implements Bindable {
                 return dropAction;
             }
 
-            public void dragExit(Component component) {
-                // empty block
-            }
+            public void dragExit(Component component) { }
 
             public DropAction dragMove(Component component, Manifest dragContent,
                 int supportedDropActions, int x, int y, DropAction userDropAction) {
@@ -118,29 +97,24 @@ public class UIMain extends Window implements Bindable {
             }
 
             public DropAction drop(Component component, Manifest dragContent,
-                int supportedDropActions, int x, int y, DropAction userDropAction) {
-                DropAction dropAction = null;
-
-                if (dragContent.containsFileList()) {
-                	try {
-						FileList fileList = dragContent.getFileList();
-						
-						for	(Iterator<File> it = fileList.iterator(); it.hasNext(); ) {
-							commandHandler.pushInFileTransferCmd(new Command(ApplicationHandler.getInstance().getConfig().getClientUrl(), 
-																				ApplicationHandler.getInstance().getConfig().getClientPort(), 
-																				it.next().getAbsolutePath()));
-						}
-						
-						dropAction = DropAction.COPY;
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+            						int supportedDropActions, int x, int y, DropAction userDropAction) {
+            if (dragContent.containsFileList()) {
+            	try {
+					FileList fileList = dragContent.getFileList();
+					
+					for	(Iterator<File> it = fileList.iterator(); it.hasNext(); ) {
+						commandHandler.pushInFileTransferCmd(new Command(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_URL), 
+																			Integer.parseInt(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_PORT)), 
+																			it.next().getAbsolutePath()));
 					}
-                }
-                
-                dragExit(component);
-
-                return dropAction;
+				} catch (IOException e) {
+					e.printStackTrace();// TODO Auto-generated catch block
+				}
             }
+            
+            dragExit(component);
+
+            return DropAction.COPY;
+        }
 	}
 }

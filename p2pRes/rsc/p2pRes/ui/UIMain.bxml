@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ui:UIMain title="ProtoUI" maximized="true"
+<ui:UIMain title="ProtoUI" maximized="true" preferredWidth="20"
 	xmlns:bxml="http://pivot.apache.org/bxml"
 	xmlns:ui="p2pRes.ui"
 	xmlns="org.apache.pivot.wtk">
@@ -12,7 +12,7 @@
 		
 		<BoxPane styles="{padding:4, verticalAlignment:'center'}">	
 			<Label text="Received files destination"/>
-			<TextArea bxml:id="outPathText"/>
+			<TextArea bxml:id="receivedFilePathText"/>
 		</BoxPane>
 		
 		<BoxPane styles="{padding:4, verticalAlignment:'center'}">	
@@ -27,7 +27,7 @@
 			<TextArea bxml:id="clientPortText"/>
 		</BoxPane>
 		
-		<BoxPane styles="{padding:4, verticalAlignment:'center'}">
+		<BoxPane styles="{padding:4, verticalAlignment:'center', horizontalAlignment:'center'}">
 			<ImageView bxml:id="teleportVortexImage" image="/p2pRes/ui/vortex.jpg"/>
 			<!--<Label text="Drop files in the vortex"/>-->
 		</BoxPane>

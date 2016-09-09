@@ -1,13 +1,12 @@
 package p2pRes.handler;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import p2pRes.conf.Config;
 import p2pRes.handler.model.Command;
 import p2pRes.net.client.Client;
 import p2pRes.net.client.ClientException;
 import p2pRes.net.server.Server;
-import p2pRes.ui.UIMain;
-import p2pRes.ui.UIRunner;
 
 /**
  * Singleton
@@ -17,6 +16,9 @@ public class ApplicationHandler {
 	
 	private CommandHandler commandHandler = new CommandHandler();
 	private ConfigurationHandler configurationHandler = new ConfigurationHandler();
+	
+	private ExecutorService serverService = null;
+	private ExecutorService commandService = null;
 
 	public static synchronized ApplicationHandler getInstance() {
 		if (instance==null) {
@@ -25,46 +27,57 @@ public class ApplicationHandler {
 		return instance;
 	}
 	
-	private ApplicationHandler() {		
-		Executors.newSingleThreadExecutor().execute(new Server(configurationHandler.getConfig().getApplicationPort(), 
-																configurationHandler.getConfig().getSharedRepository(), 
-																configurationHandler.getConfig().getOutPath()));
+	private ApplicationHandler() {}
+	
+	public void startService() {
+		if (serverService!=null) {
+			this.endService();
+		}
 		
-		Executors.newSingleThreadExecutor().execute(new Runnable() { //FIXME; Implements a producer/consumer instead
-			public void run() {
-				try {
-					while (true) {
-						if (commandHandler.hasWaitingCommand()) {
-							handleCommand(commandHandler.popOutFileTransferCmd());
-						}	
-					}
-				} 
-				catch (Exception e) {  } 
-			}
-		});	
+		serverService = Executors.newSingleThreadExecutor();
+		serverService.execute(new Server(Integer.parseInt(configurationHandler.getConfigValue(Config.ELEMENT_NAME.APPLICATION_PORT)), 
+																configurationHandler.getConfigValue(Config.ELEMENT_NAME.SHARED_REPOSITORY), 
+																configurationHandler.getConfigValue(Config.ELEMENT_NAME.RECEIVED_FILEPATH)));
+		
+		if (commandService==null) {
+			commandService = Executors.newSingleThreadExecutor();
+			commandService.execute(new Runnable() { //FIXME; Implements a producer/consumer instead
+				public void run() {
+					try {
+						while (true) {
+							if (commandHandler.hasWaitingCommand()) {
+								handleCommand(commandHandler.popOutFileTransferCmd());
+							}	
+						}
+					} 
+					catch (Exception e) {  } 
+				}
+			});	
+		}	
+	}
+	
+	public void endService() {
+		serverService.shutdown();
+		serverService = null;
+		commandService.shutdown();
+		commandService = null;
 	}
 	
 	private void handleCommand(Command command) { //do it in the command handler
 		try {
-			(new Client(configurationHandler.getConfig().getClientUrl(), 
-						configurationHandler.getConfig().getClientPort())).sendFile(command.getFilePath());
+			(new Client(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_URL), 
+						Integer.parseInt(configurationHandler.getConfigValue(Config.ELEMENT_NAME.CLIENT_PORT))))
+					.sendFile(command.getFilePath());
 		} catch (ClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.printStackTrace();// TODO Auto-generated catch block
 		}
-	}
-	
-	
-	public void register(UIRunner uiRunner) {
-		uiRunner.register(commandHandler);
-		uiRunner.register(configurationHandler);
 	}
 	
 	public CommandHandler getCommandHandler() {
 		return commandHandler;
 	}
 	
-	public Config getConfig() {
-		return configurationHandler.getConfig();
+	public ConfigurationHandler getConfigurationHandler() {
+		return configurationHandler;
 	}
 }

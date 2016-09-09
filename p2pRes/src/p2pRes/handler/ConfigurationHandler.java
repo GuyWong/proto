@@ -23,13 +23,12 @@ public class ConfigurationHandler {
 			config = loadConfig(FILECONFIGURATION_NAME);
 		}
 	}
+
+	public String getConfigValue(Config.ELEMENT_NAME elementName) { return config.getValue(elementName); }
 	
-	public Config getConfig() {
-		return config;
-	}
-	
-	public void updateConfig() {
-		writeConfig(FILECONFIGURATION_NAME, config);
+	public void updateElement(Config.ELEMENT_NAME elementName, String value) {
+		this.config.setValue(elementName, value);
+		this.writeConfig(FILECONFIGURATION_NAME, config);
 	}
 	
 	private Config loadConfig(String path) {
@@ -38,11 +37,9 @@ public class ConfigurationHandler {
 			String read = new String(reader.read(0, (int)reader.getFileSize()));
 			
 			Gson gson = new GsonBuilder().create();
-			return gson.fromJson(read, Config.class);
-			
+			return gson.fromJson(read, Config.class);		
 		} catch (ReaderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.printStackTrace();// TODO Auto-generated catch block
 		}
 		return null;
 		
@@ -56,18 +53,17 @@ public class ConfigurationHandler {
 			FileWriter writer = new FileWriter(path, true);
 			writer.write(0, serializedConf.getBytes());		
 		} catch (WriterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.printStackTrace();// TODO Auto-generated catch block
 		}
 	}
 	
 	private Config createDefault() {
-		Config config = new Config(); //TODO
-		config.setApplicationPort(6667);
-		config.setClientUrl("127.0.0.1");
-		config.setClientPort(6667);
-		config.setSharedRepository("./");
-		config.setOutPath("./");
+		Config config = new Config();
+		config.setValue(Config.ELEMENT_NAME.APPLICATION_PORT, ""+6667);
+		config.setValue(Config.ELEMENT_NAME.CLIENT_URL, "127.0.0.1");
+		config.setValue(Config.ELEMENT_NAME.CLIENT_PORT, ""+6667);
+		config.setValue(Config.ELEMENT_NAME.SHARED_REPOSITORY, "./");
+		config.setValue(Config.ELEMENT_NAME.RECEIVED_FILEPATH, "./");
 		return config;
 	}
 }
