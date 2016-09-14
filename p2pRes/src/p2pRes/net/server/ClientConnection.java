@@ -1,22 +1,21 @@
 package p2pRes.net.server;
 
-import java.net.Socket;
+import p2pRes.net.io.ChannelException;
+import p2pRes.net.io.ServerChannel;
 
 public abstract class ClientConnection implements Runnable {
-	private Server serverInstance;
-	private Socket clientSocket;
+	private ServerChannel serverChannel;
 	
-	public ClientConnection(Server serverInstance, 
-							Socket clientSocket) {
-		this.serverInstance = serverInstance;
-		this.clientSocket = clientSocket;
+	public ClientConnection(ServerChannel serverChannel) throws ServerException {
+		this.serverChannel = serverChannel;
+		try {
+			serverChannel.waitForClientConnection();
+		} catch (ChannelException e) {
+			throw new ServerException("Error on client connection", e);
+		}
 	}
 	
-	protected Socket getClientSocket() {
-		return clientSocket;
-	}
-	
-	protected Server getServerInstance() {
-		return serverInstance;
+	protected ServerChannel getServerChannel() {
+		return serverChannel;
 	}
 }

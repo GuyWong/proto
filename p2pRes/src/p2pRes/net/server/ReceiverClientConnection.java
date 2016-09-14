@@ -1,23 +1,19 @@
 package p2pRes.net.server;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import p2pRes.io.FileWriter;
 import p2pRes.io.WriterException;
 import p2pRes.log.Logger;
 import p2pRes.model.Block;
 import p2pRes.model.BlocksDescriptor;
+import p2pRes.net.io.ChannelException;
+import p2pRes.net.io.ServerChannel;
+import p2pRes.net.io.protocol.model.ProtocolResponse;
+import p2pRes.net.io.protocol.model.PushBlock;
 import p2pRes.net.processor.BlockProcessor;
 import p2pRes.net.processor.BlockProcessorException;
 import p2pRes.net.processor.BlockProcessorVisitor;
-import p2pRes.net.protocol.ProtocolException;
-import p2pRes.net.protocol.ServerProtocol;
-import p2pRes.net.protocol.response.ProtocolResponse;
-import p2pRes.net.protocol.response.PushBlock;
 
 public class ReceiverClientConnection extends ClientConnection {
 	private final BlocksDescriptor blockDescriptor;
@@ -28,13 +24,12 @@ public class ReceiverClientConnection extends ClientConnection {
 	private ExecutorService childConnectionsPool;
 	private FileWriter writer;
 	
-	public ReceiverClientConnection(Server serverInstance, 
-									Socket clientSocket, 
+	public ReceiverClientConnection(ServerChannel serverChannel, 
 									BlocksDescriptor blockDescriptor,
 									BlockProcessor blockProcessor,
 									String destinationFilePath,
 									int maxClientConnections) throws ServerException {
-		super(serverInstance, clientSocket);
+		super(serverChannel);
 		this.blockDescriptor = blockDescriptor;
 		this.blockProcessor = blockProcessor;
 		this.bpv = new BlockProcessorVisitor() {
@@ -50,13 +45,10 @@ public class ReceiverClientConnection extends ClientConnection {
 		}
 	}
 
-	@SuppressWarnings("resource")
 	public void run() {
 		try {
-		    ServerProtocol serverProtocol = new ServerProtocol(this.getClientSocket());
-		    
 			while (true) {
-				ProtocolResponse response = serverProtocol.handleInstruction();
+				ProtocolResponse response = this.getServerChannel().waitForClientCommand();
 				if (ProtocolResponse.Command.PUSH_BLOCK == response.getCommand()) {
 					this.writeBlock(((PushBlock)response).getBlockNumber(), ((PushBlock)response).getBlock());
 					try {
@@ -66,14 +58,7 @@ public class ReceiverClientConnection extends ClientConnection {
 					}
 				}
 				if (ProtocolResponse.Command.ASK_NEWCONNECTION == response.getCommand()) {
-					int portNumber = this.getServerInstance().bindNewPort();
-					Logger.info("MainClientConnection - Opening new connection - port " + portNumber);  
-					ServerSocket server = new ServerSocket(portNumber); //FIXME: finally close this object (handle with an encapsulating SrvChannelObject)
-					serverProtocol.sendPortNumber(portNumber);
-					Logger.info("MainClientConnection - port number sent - port " + portNumber);  
-					
-					this.childConnectionsPool.execute(new ReceiverClientConnection(this.getServerInstance(), 
-																					server.accept(),
+					this.childConnectionsPool.execute(new ReceiverClientConnection(this.getServerChannel().openSubChannel(),
 																					blockDescriptor,
 																					blockProcessor,
 																					destinationFilePath,
@@ -85,13 +70,18 @@ public class ReceiverClientConnection extends ClientConnection {
 				}
 				//handle the unknown command case
 			}
-		}
-		catch (ProtocolException e) {
-			e.printStackTrace();//TODO: everything is fatal for now, handle a more subtle return status
-		} catch (IOException e) {
-			e.printStackTrace();//TODO: everything is fatal for now, handle a more subtle return status
 		} catch (ServerException e) {
 			e.printStackTrace();//TODO: everything is fatal for now, handle a more subtle return status
+		} catch (ChannelException e) {
+			e.printStackTrace();//TODO: everything is fatal for now, handle a more subtle return status
+		}
+		finally {
+			try {
+				Logger.info("Closing ReceiverClientConnection... " + this.getServerChannel());
+				this.getServerChannel().close();
+			} catch (ChannelException e) {
+				e.printStackTrace();// TODO Auto-generated catch block
+			}
 		}
 	}
 	

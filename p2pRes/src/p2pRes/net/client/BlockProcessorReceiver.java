@@ -4,18 +4,18 @@ import p2pRes.io.FileWriter;
 import p2pRes.io.WriterException;
 import p2pRes.model.Block;
 import p2pRes.model.BlocksDescriptor;
+import p2pRes.net.io.ChannelException;
+import p2pRes.net.io.ClientChannel;
 import p2pRes.net.processor.BlockProcessorException;
 import p2pRes.net.processor.BlockProcessorVisitor;
-import p2pRes.net.protocol.ClientProtocol;
-import p2pRes.net.protocol.ProtocolException;
 
 public class BlockProcessorReceiver implements BlockProcessorVisitor {
 	private FileWriter writer;
-	private ClientProtocol peer;
+	private ClientChannel clientChannel;
 	private BlocksDescriptor blocksDescriptor;
 	 
-	public BlockProcessorReceiver(ClientProtocol clientProtocol, BlocksDescriptor blocksDescriptor, String outFilePath) throws BlockProcessorException {
-		this.peer = clientProtocol;
+	public BlockProcessorReceiver(ClientChannel clientChannel, BlocksDescriptor blocksDescriptor, String outFilePath) throws BlockProcessorException {
+		this.clientChannel = clientChannel;
 		this.blocksDescriptor = blocksDescriptor;
 		try {
 			this.writer = new FileWriter(outFilePath);
@@ -27,7 +27,7 @@ public class BlockProcessorReceiver implements BlockProcessorVisitor {
 	public void process(int blockNumber) throws BlockProcessorException {
 		Block block;
 		try {
-			block = this.getBlockFromPeer(blockNumber, peer);
+			block = this.getBlockFromPeer(blockNumber, clientChannel);
 			if (block == null) {
 				throw new BlockProcessorException("Invalid block received, block number: " + blockNumber);
 			}
@@ -43,10 +43,10 @@ public class BlockProcessorReceiver implements BlockProcessorVisitor {
 		}
 	}
 
-	private Block getBlockFromPeer(int blockNumber, ClientProtocol peer) throws ClientException {
+	private Block getBlockFromPeer(int blockNumber, ClientChannel clientChannel) throws ClientException {
 		try {
-			return peer.askForBlock(blockNumber);
-		} catch (ProtocolException e) {
+			return clientChannel.getBlock(blockNumber);
+		} catch (ChannelException e) {
 			throw new ClientException("Error getting block " + blockNumber + " from peer", e);
 		}
 	}

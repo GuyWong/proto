@@ -1,4 +1,4 @@
-package p2pRes.net.protocol;
+package p2pRes.net.io.protocol;
 
 import p2pRes.BaseException;
 

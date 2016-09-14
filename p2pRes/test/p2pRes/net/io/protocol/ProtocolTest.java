@@ -1,8 +1,8 @@
-package p2pRes.net.protocol;
+package p2pRes.net.io.protocol;
 
-import p2pRes.net.protocol.ClientProtocol;
-import p2pRes.net.protocol.ProtocolException;
-import p2pRes.net.protocol.ServerProtocol;
+import p2pRes.net.io.protocol.ClientProtocol;
+import p2pRes.net.io.protocol.ProtocolException;
+import p2pRes.net.io.protocol.ServerProtocol;
 import p2pRes.testTools.SimpleTestRunner;
 import java.io.IOException;
 import java.net.ServerSocket;

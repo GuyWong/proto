@@ -1,8 +1,5 @@
 package p2pRes.net.client;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import p2pRes.common.StaticsValues;
@@ -10,48 +7,43 @@ import p2pRes.log.Logger;
 import p2pRes.model.FileDescriptor;
 import p2pRes.model.FileException;
 import p2pRes.model.TransferableFile;
+import p2pRes.net.io.ChannelException;
+import p2pRes.net.io.ClientChannel;
 import p2pRes.net.processor.BlockProcessor;
-import p2pRes.net.protocol.ClientProtocol;
-import p2pRes.net.protocol.ProtocolException;
 import p2pRes.utils.FileHashBuilder;
 import p2pRes.utils.HashBuilderException;
 
 public class Client {
-	private String netAdress;
-	private ClientProtocol serverConnection;
+	private ClientChannel clientChannel;
 	
 	public Client (String netAdress, int port) throws ClientException {
-		this.netAdress = netAdress;
-
 		try {
-			ClientProtocol firstConnection = openNewChannel(netAdress, port);
+			ClientChannel firstConnection = new ClientChannel(netAdress, port);
 			try {
-				this.serverConnection = openNewChannel(netAdress, firstConnection.askForNewConnection());
+				this.clientChannel = firstConnection.openSubChannel();
 			}
 			finally {
 				firstConnection.close();
 			}
-		} catch (ProtocolException e) {
+		} catch (ChannelException e) {
 			throw new ClientException("Failed to bind a new connection to " + netAdress + ":" + port, e);
 		}
 	}
 	
 	public void getFile (String outRep, String fileName) throws ClientException {
-		FileDescriptor fileDescriptor = getFileDescriptorFromPeer(fileName, serverConnection);
+		FileDescriptor fileDescriptor = getFileDescriptorFromPeer(fileName, clientChannel);
 		Logger.debug("Client - Get FD OK " + fileDescriptor.getBlocksDescriptor().getBlockNumbers());
 		 
         BlockProcessor fileReceiver = new BlockProcessor(fileDescriptor.getBlocksDescriptor());
         ExecutorService blockFetcherPool = Executors.newFixedThreadPool(StaticsValues.MAX_CLIENT_CONNECTION);
         
         for (int i=0; i<StaticsValues.MAX_CLIENT_CONNECTION; i++) {
-        	int port;
-			try {
-				port = serverConnection.askForNewConnection();
-				Logger.debug("Client - new connection, port number: " + port);
-			} catch (ProtocolException e) {
-				throw new ClientException("Can't establish new connection", e);//Todo handle error, do not hardquit
+        	try {
+				blockFetcherPool.execute(new PeerBlockFetcher(clientChannel.openSubChannel(), outRep+"//"+fileName, fileDescriptor.getBlocksDescriptor(), fileReceiver));
+			} catch (ChannelException e) {
+				Logger.error("ERROR opening new channel " + e.getMessage()); //TODO
+				i--;
 			}
-        	blockFetcherPool.execute(new PeerBlockFetcher(netAdress, port, outRep+"//"+fileName, fileDescriptor.getBlocksDescriptor(), fileReceiver));
         }
         
         while (!fileReceiver.isComplete()) { //TODO ugly !
@@ -76,34 +68,30 @@ public class Client {
 			throw new ClientException("Error opening file to transfer " + filePath, e);
 		}
 			
-		int portTransfertChannel;
+		ClientChannel transferChannel;
 		try {
-			portTransfertChannel = serverConnection.sendFileDescriptor(transferableFile.getDescriptor());
-		} catch (ProtocolException e) {
+			transferChannel = this.clientChannel.openTransferChannel(transferableFile.getDescriptor());
+		} catch (ChannelException e) {
 			throw new ClientException("Error sending file descriptor to peer", e);
 		}	
-		
-		ClientProtocol transferChannel = openNewChannel(netAdress, portTransfertChannel);
 			
 		try {
 			ExecutorService blockSenderPool = Executors.newFixedThreadPool(StaticsValues.MAX_CLIENT_CONNECTION);
 			BlockProcessor fileSender = new BlockProcessor(transferableFile.getDescriptor().getBlocksDescriptor());
 			
 	        for (int i=0; i<StaticsValues.MAX_CLIENT_CONNECTION; i++) {
-	        	int port;
 				try {
-					port = transferChannel.askForNewConnection();
-					Logger.debug("Client - new connection, port number: " + port);
-				} catch (ProtocolException e) {
-					throw new ClientException("Can't establish new connection", e);//Todo handle error, do not hardquit
+					blockSenderPool.execute(new PeerBlockSender(transferChannel.openSubChannel(), transferableFile, fileSender));
+				} catch (ChannelException e) {
+					Logger.error("ERROR opening new channel " + e.getMessage()); //TODO
+					i--;
 				}
-				blockSenderPool.execute(new PeerBlockSender(netAdress, port, transferableFile, fileSender));
 	        }
 		}
 		finally {
 			try {			
 				transferChannel.close();
-			} catch (ProtocolException e) {
+			} catch (ChannelException e) {
 				throw new ClientException("Error closing connection", e);
 			}
 		}
@@ -111,17 +99,17 @@ public class Client {
 	
 	public void close() throws ClientException {
 		try {
-			this.serverConnection.close();
-		} catch (ProtocolException e) {
+			this.clientChannel.close();
+		} catch (ChannelException e) {
 			throw new ClientException("Error closing connection", e);
 		}
 	}
 	
-	private FileDescriptor getFileDescriptorFromPeer(String fileName, ClientProtocol peer) throws ClientException {
+	private FileDescriptor getFileDescriptorFromPeer(String fileName, ClientChannel clientChannel) throws ClientException {
 		//TODO: handle notFoundResponse
 		try {
-			return peer.getFileDescriptor(fileName);
-		} catch (ProtocolException e) {
+			return clientChannel.getFileDescriptor(fileName);
+		} catch (ChannelException e) {
 			throw new ClientException("Error getting file descriptor for " + fileName + " from peer", e);
 		}
 	}
@@ -133,17 +121,5 @@ public class Client {
 			e.printStackTrace();//TODO: handle properly exception
 			return false;
 		}
-	}
-	
-	private ClientProtocol openNewChannel(String netAdress, int portNumber) throws ClientException {
-		try {
-			return new ClientProtocol(new Socket(netAdress, portNumber));
-		} catch (UnknownHostException e) {
-			throw new ClientException("Can't find server " + netAdress + ":" + portNumber, e);
-		} catch (IOException e) {
-			throw new ClientException("Error opening channel " + netAdress + ":" + portNumber, e);
-		} catch (ProtocolException e) {
-			throw new ClientException("Client initialisation failed", e);
-		}	
 	}
 }

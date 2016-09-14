@@ -1,4 +1,4 @@
-package p2pRes.net.protocol;
+package p2pRes.net.io.protocol;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -16,8 +16,8 @@ public class ClientProtocol extends Protocol { //Modelize socket opening and clo
 		return (FileDescriptor)this.readObject();	
 	}
 	
-	public int sendFileDescriptor(FileDescriptor fileDescriptor) throws ProtocolException {
-		this.sendByte(Protocol.PUSH_FILE_DESCRIPTOR);
+	public int askFileTransferConnection(FileDescriptor fileDescriptor) throws ProtocolException {
+		this.sendByte(Protocol.ASK_OPEN_FILEPUSH_CHANNEL);
 		this.sendObject(fileDescriptor);
 		return this.readInt();
 	}

@@ -1,4 +1,4 @@
-package p2pRes.net.protocol.response;
+package p2pRes.net.io.protocol.model;
 
 import p2pRes.model.Block;
 

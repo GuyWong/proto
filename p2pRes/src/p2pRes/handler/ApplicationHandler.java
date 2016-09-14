@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import p2pRes.conf.Config;
 import p2pRes.handler.model.Command;
+import p2pRes.log.Logger;
 import p2pRes.net.client.Client;
 import p2pRes.net.client.ClientException;
 import p2pRes.net.server.Server;
@@ -51,10 +52,12 @@ public class ApplicationHandler {
 							if (commandHandler.hasWaitingCommand()) {
 								handleCommand(commandHandler.popOutFileTransferCmd());
 							}	
+							handleErrors();
 							Thread.sleep(100);
 						}
 					} 
 					catch (Exception e) { errorHandler.addError(e); } 
+					handleErrors();
 				}
 			});	
 		}	
@@ -65,6 +68,13 @@ public class ApplicationHandler {
 		serverService = null;
 		commandService.shutdown();
 		commandService = null;
+	}
+	
+	public void handleErrors() {
+		if (errorHandler.hasErrors()) {
+			Logger.error(errorHandler.toString());
+			errorHandler.clear();
+		}
 	}
 	
 	private void handleCommand(Command command) throws UIException { //do it in the command handler

@@ -1,16 +1,16 @@
-package p2pRes.net.protocol;
+package p2pRes.net.io.protocol;
 
 import java.net.Socket;
 import p2pRes.model.Block;
 import p2pRes.model.FileDescriptor;
-import p2pRes.net.protocol.response.AskForBlock;
-import p2pRes.net.protocol.response.AskForEndConnection;
-import p2pRes.net.protocol.response.AskForFileDefinition;
-import p2pRes.net.protocol.response.AskForNewConnection;
-import p2pRes.net.protocol.response.ProtocolResponse;
-import p2pRes.net.protocol.response.PushBlock;
-import p2pRes.net.protocol.response.ReceiveFileDefinition;
-import p2pRes.net.protocol.response.UnknownCommand;
+import p2pRes.net.io.protocol.model.AskForBlock;
+import p2pRes.net.io.protocol.model.AskForEndConnection;
+import p2pRes.net.io.protocol.model.AskForFileDefinition;
+import p2pRes.net.io.protocol.model.AskForNewConnection;
+import p2pRes.net.io.protocol.model.AskOpenFilePushChannel;
+import p2pRes.net.io.protocol.model.ProtocolResponse;
+import p2pRes.net.io.protocol.model.PushBlock;
+import p2pRes.net.io.protocol.model.UnknownCommand;
 
 public class ServerProtocol extends Protocol {	
 	public ServerProtocol(Socket socket) throws ProtocolException {
@@ -22,8 +22,8 @@ public class ServerProtocol extends Protocol {
 		if (Protocol.ASK_FILE_DESCRIPTOR == clientCommand) {
 			return new AskForFileDefinition(new String(this.readBytes()));
 		}
-		if (Protocol.PUSH_FILE_DESCRIPTOR == clientCommand) {
-			return new ReceiveFileDefinition((FileDescriptor)this.readObject());
+		if (Protocol.ASK_OPEN_FILEPUSH_CHANNEL == clientCommand) {
+			return new AskOpenFilePushChannel((FileDescriptor)this.readObject());
 		}
 		else if (Protocol.ASK_BLOCK == clientCommand) {
 			return new AskForBlock(this.readInt());

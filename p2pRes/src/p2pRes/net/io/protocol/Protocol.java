@@ -1,4 +1,4 @@
-package p2pRes.net.protocol;
+package p2pRes.net.io.protocol;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -7,7 +7,7 @@ import java.net.Socket;
 
 public abstract class Protocol {
 	protected final static byte ASK_FILE_DESCRIPTOR = 0;
-	protected final static byte PUSH_FILE_DESCRIPTOR = 1;	
+	protected final static byte ASK_OPEN_FILEPUSH_CHANNEL = 1;	
 	protected final static byte ASK_BLOCK = 2;
 	protected final static byte PUSH_BLOCK = 3;
 	protected final static byte ACK = 4;
@@ -131,5 +131,13 @@ public abstract class Protocol {
 	
 	protected Socket getSocket() {
 		return this.socket;
+	}
+	
+	public void close() throws ProtocolException {
+		try {
+			socket.close();
+		} catch (IOException e) {
+			throw new ProtocolException("Error closing connection", e);
+		}
 	}
 }

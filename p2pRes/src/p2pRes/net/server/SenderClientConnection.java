@@ -1,37 +1,33 @@
 package p2pRes.net.server;
 
-import java.net.Socket;
-
 import p2pRes.log.Logger;
+import p2pRes.model.Block;
 import p2pRes.model.FileException;
 import p2pRes.model.TransferableFile;
-import p2pRes.net.protocol.ProtocolException;
-import p2pRes.net.protocol.ServerProtocol;
-import p2pRes.net.protocol.response.AskForBlock;
-import p2pRes.net.protocol.response.ProtocolResponse;
+import p2pRes.net.io.ChannelException;
+import p2pRes.net.io.ServerChannel;
+import p2pRes.net.io.protocol.model.AskForBlock;
+import p2pRes.net.io.protocol.model.ProtocolResponse;
 
 public class SenderClientConnection extends ClientConnection {
 	private TransferableFile transferableFile;
 	
-	public SenderClientConnection(Server serverInstance, 
-										Socket clientSocket,
-										TransferableFile transferableFile) {
-		super(serverInstance, clientSocket);
+	public SenderClientConnection(ServerChannel serverChannel,
+									TransferableFile transferableFile) throws ServerException {
+		super(serverChannel);
 		this.transferableFile = transferableFile;
 	}
 
 	public void run() {
 		try {
-		    ServerProtocol serverProtocol = new ServerProtocol(this.getClientSocket());
-		    
 			while (true) {
-				ProtocolResponse response = serverProtocol.handleInstruction();
+				ProtocolResponse response = this.getServerChannel().waitForClientCommand();
 				if (ProtocolResponse.Command.ASK_FOR_BLOCK == response.getCommand()) {
 					try {
-						serverProtocol.sendBlock(transferableFile.readBlock(((AskForBlock)response).getBlockNumber()));
+						this.getServerChannel().sendBlock(new Block(transferableFile.readBlock(((AskForBlock)response).getBlockNumber())));
 					} catch (FileException e) {
-						// TODO handle with error collector
-						e.printStackTrace();
+					} catch (ChannelException e) {
+						e.printStackTrace();// TODO handle with error collector
 					}
 				}
 				if (ProtocolResponse.Command.ASK_ENDCONNECTION == response.getCommand()) {
@@ -41,9 +37,17 @@ public class SenderClientConnection extends ClientConnection {
 				//handle the unknown command case
 			}
 		}
-		catch (ProtocolException e) {
+		catch (ChannelException e) {
 			//TODO: everything is fatal for now, handle a more subtle return status
 			e.printStackTrace();
+		}
+		finally {
+			try {
+				Logger.info("Closing SenderClientConnection... " + this.getServerChannel());
+				this.getServerChannel().close();
+			} catch (ChannelException e) {
+				e.printStackTrace();// TODO Auto-generated catch block
+			}
 		}
 	}
 }
