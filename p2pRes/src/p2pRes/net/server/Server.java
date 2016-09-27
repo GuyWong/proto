@@ -14,8 +14,6 @@ public class Server implements Runnable {
 	private final String outRep;
 	private final ExecutorService threadPool;
 	
-	private boolean stopAsked = false;
-	
 	public Server(int port, String sharedRep, String outRep) {
 		this.port = port;
 		this.sharedRep = sharedRep;
@@ -23,15 +21,11 @@ public class Server implements Runnable {
 		this.threadPool = Executors.newFixedThreadPool(StaticsValues.MAX_CLIENT_CONNECTION/*TODO parameter this*/);
 	}
 	
-	public void stop() {
-		this.stopAsked = true;
-	}
-	
 	public void run() {
 		try {
 			ServerChannel serverChannel = new ServerChannel(port);
 			try {
-				while (!stopAsked) {
+				while (true) {
 					serverChannel.waitForClientConnection();
 					try {
 					    while (true) {

@@ -107,7 +107,7 @@ public class SocketsChannelTest {
 	
 	@After
 	public void tearDown() {
-		server.stop();
+		serverThread.shutdownNow();
 		try {
 			clientChannel.close();
 		} catch (ChannelException e) { Assert.fail(e.getMessage()); }
