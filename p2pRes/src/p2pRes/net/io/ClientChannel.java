@@ -78,4 +78,8 @@ public class ClientChannel {
 			throw new ChannelException("Error closing connection", e);
 		}
 	}
+	
+	protected int getPort() {
+		return serverPort;
+	}
 }
